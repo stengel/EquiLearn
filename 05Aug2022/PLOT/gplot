@@ -1,0 +1,3 @@
+set terminal postscript eps color
+set output "Pareto.eps"
+plot "0myopic" with lines lw 3, "1guess125" with lines lw 3, "2const125" with lines lw 3, "3const117" with lines lw 3, "4const114.2" with lines lw 3, "5const105" with lines lw 3, "6const100" with lines lw 3, "7const95" with lines lw 3, "8imit120" with lines lw 3, "9imit110" with lines lw 3, "10fight125" with lines lw 3,

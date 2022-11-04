@@ -1,0 +1,6 @@
+set terminal postscript eps color
+set output "Pareto-manual.eps"
+# plot "0myopic" with lines lw 3, "1guess125" with lines lw 3, "2fight125" with lines lw 3, "3const125" with lines lw 3, "4const114.5" with lines lw 3, "5const105" with lines lw 3, "6imit114.5" with lines lw 3, "7imit120" with lines lw 3, "8imit110" with lines lw 3, "0myopic" , "1guess125" , "2fight125" , "3const125" , "4const114.5" , "5const105" , "6imit114.5" , "7imit120" , "8imit110" , 
+plot "0myopic" with lines lw 3, "1guess125" with lines lw 3, "0myopic" , "1guess125" 
+# plot "0myopic" with dots ps 6, "1guess125" with dots ps 6, "2fight125" with dots ps 6, "3const125" with dots ps 6, "4const114.5" with dots ps 6, "5const105" with dots ps 6, "6imit114.5" with dots ps 6, "7imit120" with dots ps 6, "8imit110" with dots ps 6, 
+#plot "0myopic" , "1guess125" , "2fight125" , "3const125" , "4const114.5" , "5const105" , "6imit114.5" , "7imit120" , "8imit110" , 

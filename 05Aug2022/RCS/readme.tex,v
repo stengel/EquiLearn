@@ -1,0 +1,1403 @@
+head	1.10;
+access;
+symbols;
+locks
+	stengel:1.10; strict;
+comment	@% @;
+
+
+1.10
+date	2022.08.27.21.27.07;	author stengel;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2022.08.27.20.48.38;	author stengel;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2022.08.20.14.13.22;	author stengel;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2022.08.16.11.19.55;	author stengel;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2022.08.06.13.43.04;	author stengel;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2022.08.06.09.43.46;	author stengel;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2022.08.06.08.23.53;	author stengel;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2022.08.04.22.53.05;	author stengel;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2022.08.04.21.58.35;	author stengel;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2022.08.04.21.15.31;	author stengel;	state Exp;
+branches;
+next	;
+
+
+desc
+@main readme file
+@
+
+
+1.10
+log
+@plan of work
+@
+text
+@% Computational Experiments for Evolutionary Pricing Games
+\documentclass[a4paper,12pt]{article}  %% important: a4paper first
+%
+% \usepackage[notcite,notref]{showkeys}
+\pdfoutput=1
+\def\R{\textcolor{red}}
+\usepackage{inconsolata}  % \tt font
+\usepackage{natbib} 
+\usepackage{amsthm}
+\usepackage{newpxtext,newpxmath} 
+\usepackage{microtype}
+\linespread{1.10}        % Palatino needs more leading (space between lines)
+\usepackage{xcolor}
+\usepackage{pict2e} 
+% \usepackage{bimatrixgame}
+\usepackage{tikz} 
+\usetikzlibrary{shapes}
+\usetikzlibrary{arrows.meta}
+\usepackage{amssymb}
+%\usepackage{smallsec}
+\usepackage{graphicx}
+\graphicspath{ {./images/} {./PLOT/} }
+%\usepackage[pdflatex]{hyperref}
+\usepackage[hyphens]{url} 
+\usepackage[colorlinks,linkcolor=purple,citecolor=blue]{hyperref}
+%\usepackage{hyperref}
+\urlstyle{sf}
+\usepackage[format=hang,justification=justified,labelfont=bf,labelsep=quad]{caption} 
+% \input macros-drawtree
+\oddsidemargin=.46cm    % A4
+\textwidth=15cm
+\textheight=23.3cm
+\topmargin=-1.3cm
+\clubpenalty=10000
+\widowpenalty=10000
+\predisplaypenalty=1350
+\sfcode`E=1000  % normal spacing if E followed by period, as in "EFCE."
+\sfcode`P=1000  % normal spacing if P followed by period, as in "NP." 
+\newdimen\einr
+\einr1.7em
+\newdimen\eeinr 
+\eeinr 1.7\einr
+\def\aabs#1{\par\hangafter=1\hangindent=\eeinr
+    \noindent\hbox to\eeinr{\strut\hskip\einr#1\hfill}\ignorespaces}
+\def\rmitem#1{\par\hangafter=1\hangindent=\einr
+  \noindent\hbox to\einr{\ignorespaces#1\hfill}\ignorespaces} 
+\newcommand\bullitem{\rmitem{\raise.17ex\hbox{\kern7pt\scriptsize$\bullet$}}} 
+\def\subbull{\vskip-.8\parskip\aabs{\raise.2ex\hbox{\footnotesize$\circ$}}}
+\let\sfield\mathcal
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+\def\reals{{\mathbb R}} 
+\def\eps{\varepsilon}
+\def\prob{\hbox{prob}}
+\def\sign{\hbox{sign}}
+\def\proof{\noindent{\em Proof.\enspace}}
+\def\proofof#1{\noindent{\em Proof of #1.\enspace}}
+\def\endproof{\hfill\strut\nobreak\hfill\tombstone\par\medbreak}
+\def\tombstone{\hbox{\lower.4pt\vbox{\hrule\hbox{\vrule
+  \kern7.6pt\vrule height7.6pt}\hrule}\kern.5pt}}
+\def\eqalign#1{\,\vcenter{\openup.7ex\mathsurround=0pt
+ \ialign{\strut\hfil$\displaystyle{##}$&$\displaystyle{{}##}$\hfil
+ \crcr#1\crcr}}\,}
+\def\zw#1\par{\vskip2ex{\textbf{#1}}\par\nobreak} 
+\newdimen\pix  % bounding box height for eps files
+\pix0.08ex
+\newsavebox{\figA} 
+\parindent0pt
+\parskip1.3ex
+
+\title{%
+Computational Experiments for\\
+Evolutionary Pricing Games
+}
+
+\author{
+Bernhard von Stengel%
+% \thanks{Department of Mathematics,
+% London School of Economics, London WC2A 2AE, United Kingdom.
+% Email:  b.von-stengel@@lse.ac.uk}
+}
+
+\date{August 5, 2022
+% \date{\today
+% \\[1ex] --- draft, not for distribution ---
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Here we describe computational experiments for
+the project description
+``Evolutionary Pricing Games'' (von Stengel, 2022), included
+in this folder.
+%
+It is a documentation of the software, which at each stage
+represents reproducable computational experiments.
+%
+It also outlines the next steps for more self-contained
+runs (with fewer manual interventions)
+of the experiments, and lists open questions. 
+\end{abstract}
+
+\section{What's new?}
+
+\bullitem
+This is the very first version of a documentation of the 
+computational experiments, in an ad-hoc format (which will
+evolve).
+Subsequent versions may be more structured.
+
+\bullitem
+Implementation of a sophisticated ``guess your opponent''
+strategy with interesting effects on the equilibria of the
+tournament bimatrix game.
+
+\bullitem
+Some attempt at visualizing the bimatrix game payoff pairs. 
+
+\def\dirname{{\tt 05Aug2022/}}
+\def\equifile{{\tt equi11x5}}
+\def\projfile{{\tt Evol-05Aug2022.pdf, Evol-05Aug2022.tex}}
+\def\codepdf{{\tt 05Aug2022-play.pdf}}
+\section{File inventory} 
+
+{\einr 13em\parskip.3ex%
+\rmitem{directory name:} \dirname 
+\rmitem{main Python file:} {\tt play.py} ~ (run with python3)
+\rmitem{code with line numbers:} \codepdf
+% \rmitem{documentation:} {\tt comments}
+\rmitem{output file:} {\tt output}
+\rmitem{computed equilibria:} \equifile
+\rmitem{plots folder:} {\tt ./PLOT}
+\rmitem{project description:} \projfile
+\rmitem{this file:} {\tt readme.pdf, readme.tex}
+% \rmitem{graphics files:} {\tt }
+
+}
+
+\section{Description of the model and investigation}
+
+The projection description \projfile\
+describes a duopoly game investigated with the ``strategy
+method'' by Keser (1992).
+
+The present text describes and documents the computational
+experiments to continue this research, by extending it
+with
+\bullitem
+the implemention of some first pricing strategies
+\bullitem
+equilibrium analysis
+\bullitem
+evolutionary simulations (not yet implemented)
+\bullitem
+machine learning (not yet implemented).
+
+\section{Purpose of this document and directory contents} 
+
+The current directory \dirname, named by date, is meant to
+contain a complete, self-contained snapshot of the project
+at each stage.
+
+It will be copied and updated with a new date at the next
+iteration.
+
+A more systematic solution might be to store it on github.
+However, this requires technical knowledge of branch
+management in git.
+The current code is still small and copying seems fine for
+now.
+
+Its documentation in LaTeX is more important at the moment.
+
+\R{Text parts in red} highlight points for improvement in
+the current context, which may become kind of ``issues'' (as
+in github) to become resolved in subsequent coding phases.
+\R{Maybe they should be numbered here and later recorded as
+``resolved''.}
+
+\R{We can switch to Git, with the advantage that only
+important files are stored in the repository and very easily
+shared with {\tt git push} and {\tt git pull}, but have to
+clearly mark those project snapshots, perhaps as
+\textbf{releases}, that do work on their own.
+We need tutorials on branch management.} 
+
+\section{Current code capability} 
+
+At present, the Python code {\tt play.py} contains
+\bullitem
+a number of duopoly pricing strategies as methods
+\bullitem
+a method {\tt match()} to match any two strategies against each other
+\bullitem
+a method {\tt tournament()} to match all low-cost strategies
+of player 0 to all high-cost strategies of player 1, and
+record the resulting payoffs to the two players in a
+bimatrix game $(A,B)$.
+This bimatrix game is then written to standard output to
+find all its Nash equilibria via the program {\tt lrsnash},
+currently by using the webpage {\tt
+http://banach.lse.ac.uk}.
+\R{Because {\tt lrsnash} exists as an executable C program,
+starting it from Python should be automated next.}
+
+\bullitem
+The output of {\tt lrsnash}, via this manual route, is
+stored in the equilibrium file \equifile.
+
+% The file {\tt comments} explains the Python code in more
+% detail with reference to its line numbers in \codepdf.
+% This is not to clutter the Python file itself, \R{but the
+% reference to line numbers is likely to outdate quickly.
+% Maybe put these comments into the Python code after all?
+% Using better documentation tools?}
+
+\bullitem
+The output of {\tt play.py} to standard terminal output {\tt stdout} is
+recorded in the file {\tt output}.
+Apart from $(A,B)$, it prints a sample run of two
+strategies against each other, with the history of demand
+potentials, prices, and profits of the two players,
+and a descriptive list of the two players' strategies.
+
+\bullitem
+Graphical output:
+In {\tt ./PLOT/}, a number of files are generated to 
+display the payoff pairs in a suitable graphical format via
+the Linux program {\tt gnuplot}.
+\R{Improvement with Python packages seems appropriate.}
+
+\subsection{Strategies}
+
+In \projfile, Sections 4 and 5 describe some pricing
+strategies.
+They are implemented as Python methods.
+Two minimum parameters of a strategy are player and time
+period
+\R{(player is always the first parameter; maybe the time
+period should always be the second parameter for
+consistency)},
+and possibly additional parameters such as a price for the
+first period.
+All strategies have access to the past demand potentials and prices
+of the players, but for the current time period can only
+access the player's own demand potential.
+Prices cannot be set below cost.
+
+The following strategies are straightforward 
+(because it is optimal, they always use the myopic monopoly
+price in the last period):
+\bullitem
+the myopic monopoly price,
+\bullitem
+a constant price,
+\bullitem
+imitating the opponent's previous price.
+
+A ``fightback'' strategy to reclaim a lost but aspired
+demand potential turned out to be not so easy to implement
+and has a first version {\tt fight}, and a more sophisticated
+version {\tt guess}.
+
+{\tt fight} is very aggressive because it never raises
+prices back, which results in oscillations and a price war
+when played against each other.
+
+{\tt guess} remedies this, and has other features:
+
+\bullitem
+When the demand potential is favorable, it lets the firm's
+price raise partially (weighted with a factor of 0.4
+compared to the last own price with weight 0.6).
+This allows convergence to cooperation near the monopoly
+price (minus 7 for protection).
+\R{It will be interesting if such a behavior, and these
+weights and the parameter 7, which may not be optimal, is
+learned in a neural net.}
+
+\bullitem
+Importantly, rather than reacting to the opponent's last
+price, which seems to induce oscillating price wars, it
+assumes that the determining variable for the opponent's
+behavior is their \textit{sales number} (demand potential
+minus price). 
+It stores this as a static variable
+(in Python: the global list {\tt oppsaleguess}) which is
+updated with a multiplicative weight {\tt alpha} from last
+time and then used to estimate the opponent price from their
+\textit{current} demand potential $400-D$ (where $D$ is the
+own demand potential) to reclaim the aspired potential in
+the next round.
+
+In order to test the imitation strategies and possible
+responses against them, they are used for the column
+player~1 against several constant strategies of the row
+player~0.
+In addition to the imitation strategies, 
+each player's first strategy is the myopic strategy, and the
+second strategy is the sophisticated {\tt guess} strategy.
+Indeed, the latter two represent a (possibly fragile)
+\textit{pure Nash equilibrium}, see below.
+The size of $(A,B)$ is here $11\times 5$.
+
+\subsection{Graphical output}
+
+The generated bimatrix game $(A,B)$ contains payoff pairs
+that reflect how the two players cooperate or compete for
+any low-cost strategy (row) against high-cost strategy
+(column).
+
+We want to display the possible payoff pairs in the plane as
+the possible ``region'' of cooperation versus competition,
+and explore its Pareto frontier, where a gain of one player
+can only be achieved at the expense of the other.
+
+I try to display these payoff pairs not just as a collection
+of dots but also in dependence on the player's strategies.
+The following can be improved but is a start.
+
+The directory {\tt ./PLOT} has to exist before {\tt play.py}
+is run.
+It will contain $m$ files for the $m$ strategies of
+player~0, each with the pairs of payoffs in the respective
+row of $(A,B)$.
+These are then used with the program {\tt gnuplot}
+(possibly \R{later to be replaced by Python plots}) to
+display the payoff pairs.
+
+The first two rows of $(A,B)$
+are the myopic and the {\tt guess} strategy of player~0,
+with the following payoffs:
+% \\
+% \includegraphics[width=7cm]{2rowsAB.png}
+% \\
+\begin{verbatim}
+A = 5584  5294  5182  4724  5294    B = 3756  3982  4064  4360  3982 
+    6027  5552  5382  4700  5428        3376  3693  3591  2971  3639 
+\end{verbatim}
+The five columns of $(A,B)$ are the strategies named
+{\tt myopic, guess130, imit131, imit114.2, fight130}
+of player~1, where 130, 131, 114.2, 130 are the starting
+prices in the first period.
+Against the myopic strategy of player~0, {\tt fight130}
+performs the same as {\tt guess130} (with payoff pair
+$5294,3982$).
+Usually {\tt fight130} is much more aggressive and therefore
+listed last.
+
+The graphics show each payoff pair as a point in the plane
+with the row player's payoff in the horizontal direction and
+the column player's payoff in the vertical direction.
+For each strategy of the row player (in the next picture
+only for the first two rows), we connect these points by
+four line segments for the five column strategies.
+\\
+\includegraphics[width=15cm]{Pareto-manual.eps}
+\\
+This plot is generated (in directory {\tt ./Plot/})
+with the Linux command 
+\\
+{\tt gnuplot gplot-manual} \
+to produce the output file {\tt Pareto-manual.eps}.
+The choice of colors and symbols is automatic.
+The green line from right to left shows the performance of
+{\tt guess125}, which is much better for the row player than
+the myopic strategy.
+
+For the 11 strategies of the full game, the symbols (like
+the small yellow boxes above) are too
+numerous, and only the lines are displayed, as follows:
+\\
+\includegraphics[width=15cm]{Pareto.eps}
+\\
+The lines, to be read from right to left, show the
+following:
+\bullitem
+The right endpoint shows how each row performs against the
+myopic strategy (first column) of the column player.
+It can exploit that startegy, even with a constant price,
+with marginal differences when that constant price is 
+117, 114.2, or 105, and from then on even decreasing.
+\bullitem
+The second point of the first line segment (from the right)
+shows the performance against {\tt guess130} of the column
+player. It is ``retaliatory'' in that either both players
+score low or both score high.
+\bullitem
+The left endpoint of each line shows how each row performs
+against the last strategy {\tt fight130} of the column
+player.
+In fact, that strategy is able to exploit the constant-price
+strategies of the row player of prices 100, 105, 117 shown
+in red, blue, and dark yellow. 
+
+Overall, there is already a wide spectrum of possible payoff
+pairs and types of strategy.
+
+\section{Equilibrium analysis}
+
+This is most interesting. 
+This game has already five mixed Nash equilibria.
+However, three of these will have index $+1$ and two have
+index $-1$.
+Those with index $-1$ will not be dynamically stable.
+\R{Having the index computation alongside would therefore be
+a good idea.}
+
+It turns out that for the column player, every strategy
+except the myopic strategy (the first column) appears in a
+mixed Nash equilibrium.
+For the row player, there are four pure strategies that appear in
+an equilibrium, which are
+{\tt guess125,  const114.2, imit120, imit110}.
+
+If the strategies that do not appear in a mixed equilibrium
+are omitted, then the resulting $4\times4$ game
+\textit{happens to have the same mixed Nash equilibria
+(including a fully mixed one). This is not normally the
+case: The omitted strategies may have suppressed some
+equilibria that could appear in the smaller game.}
+(Any mixed equilibrium of the larger game is also an
+equilibrium of the smaller game, which has fewer
+opportunities to deviate.)
+Here, the five equilibria are as follows, in a manually
+edited version of the output of {\tt lrsnash}.
+\R{(This could be automated: reducing the display of
+probabilities to 4 digits past the decimal point, and
+suppressing pure strategies that have probability zero.)}
+
+% All columns except the first ``myopic'' column appear 
+\begin{verbatim}
+    A = 5552  5382  4700  5428     B = 3693  3591  2971  3639
+        5367  5383  4916  4776         3388  3387  3725  3779
+        5458  5270  4900  5458         3847  3906  3895  3847
+        5538  5318  4907  4467         3673  3642  3591  3328
+
+    1  P1:  (1)  0.1134  0.2613  0.3468  0.2784  EP=  5201.93
+       P2:  (1)  0.2400  0.3927  0.3266  0.0407  EP=  3661.12
+
+    2  P1:  (2)  0.0501  0.1189  0.8310  0.0     EP=  5174.28
+       P2:  (2)  0.0     0.5843  0.3116  0.1041  EP=  3828.49
+
+    3  P1:  (3)  0.0     0.4705  0.5294  0.0     EP=  4912.79
+       P2:  (3)  0.0     0.0     0.9771  0.0229  EP=  3815.0
+
+    4  P1:  (4)  0.0     0.1957  0.0     0.8043  EP=  4938.55
+       P2:  (4)  0.05    0.0     0.95    0.0     EP=  3617.22
+
+    5  P1:  (5)  1.0     0.0     0.0     0.0     EP=  5552.0
+       P2:  (5)  1.0     0.0     0.0     0.0     EP=  3693.0 
+\end{verbatim}
+The last row shows that {\tt(guess125, guess130)} is a
+pure-strategy equilibrium.
+Note, however, that the last row of the $4\times 4$ game
+above has a payoff of 5538 which is not much lower than the
+equilibrium payoff of 5552, so this pure equilibrium may be
+fragile in the presence of other strategies.
+
+\section{Plan of work}
+
+The goal of this research is learning how to play well a
+complex ``base game'', here the pricing game, which is too
+complex to know in advance, against an unknown distribution
+of opponents who themselves also evolve.
+
+Here are some next steps.
+
+\bullitem
+\textbf{Remove the end effect.}
+The pricing game runs over a fixed number of 25 periods,
+which has an ``end effect'' that myopic play is optimal
+in the last period (which could be extended with further
+optimal equilibrium play in the preceding periods).
+\R{It seems better to introduce a discount factor that
+terminates the game with a fixed probability, say 4 percent
+-- which should be a parameter -- after each round to
+suppress this arbitrary end effect. \textit{In each match,
+this will require multiple rounds because the number of 
+rounds of interaction with the opponent is random.}
+\textbf{It is probably also a good idea to start the random
+generator with a fixed seed to make these random runs
+reproducible, i.e. always giving the same payoff pairs.
+Dependency on this seed should be tested separately.}}
+
+\bullitem
+\textbf{Introduce a learning model.}
+In the pricing game, either Q-learning or some neural net
+should be trained to determine the price for the next
+period.
+
+\bullitem
+\textbf{Evaluate the performance of a strategy.}
+The learning could be done, ad-hoc, in two phases:
+\subbull
+play against a fixed distribution of existing strategies.
+The parameters of the learning model are adapted until it
+plays well against an existing distribution of other
+strategies.
+\subbull
+once learning has stabilized, the new strategy is entered
+into the strategy pool.
+\subbull
+an evolutionary dynamics, such as the replicator
+dynamics, is then run, which presumably changes the
+distribution of strategies (one would need to recognize once
+this has entered a certain orbit, perhaps via a
+stabilization of the distribution of strategies).
+\subbull
+this new distribution is then used for the next
+learning round.
+
+\bullitem
+\textbf{Alternative: no two phases of ``learning'' and
+evolution.}
+Alternatively, the learning could take place during the run
+of the evolutionary dynamics. 
+However, this may result in interaction effects that are
+difficult to analyze.
+
+\bullitem
+\textbf{Dependency on the starting point.}
+Evolutionary dynamics may result in different stationary
+orbits or even equilibria depending on the starting
+distribution.
+For example, the pure equilibrium above may only be an
+attractor in a small neighborhood of the equilibrium itself,
+and otherwise lead to another equilibrium.
+
+\bullitem
+\textbf{Comparison of evolutionary dynamics and the tracing
+procedure for equilibrium computation.}
+The tracing procedure has a simple implementation via
+Lemke's algorithm and leads to Nash equilibrium (of positive
+index). 
+It would be interesting to compare this, also dependent on
+the starting point, with where evolutionary dynamics lead
+to.
+This comparison could already be tested for the $4\times 4$
+game above.
+
+
+
+
+\end{document}
+
+@
+
+
+1.9
+log
+@eq analy
+@
+text
+@d468 83
+@
+
+
+1.8
+log
+@grapics
+@
+text
+@d114 4
+a117 2
+This documentation about the computational experiments, in
+an ad-hoc format (which will evolve).
+d153 1
+a153 1
+This text describes and documents the computational
+d157 1
+a157 1
+implementing pricing strategies
+d188 7
+d226 2
+a227 2
+The output to standard terminal output {\tt stdout} is
+recorded in {\tt output}.
+d252 3
+a254 3
+All strategies can use the past demand potentials and prices
+of the players, but for the current time period can only use
+the player's own demand potential.
+d269 1
+a269 1
+and has a first version {\tt fight} and sophisticated
+d341 7
+a347 3
+\\
+\includegraphics[width=7cm]{2rowsAB.png}
+\\
+d401 2
+a402 1
+strategies of the row player. 
+d410 1
+a410 1
+This game has already five mixed equilibria.
+d417 22
+d440 29
+@
+
+
+1.7
+log
+@start eq ana
+@
+text
+@d190 1
+a190 1
+a number of duopoly pricing strategies
+d276 1
+a276 1
+weights an the parameter 7, which may not be optimal, is
+d290 2
+a291 1
+own demand potential to reclaim the own aspired potential.
+d298 1
+a298 1
+each player's first strategy is the myopic strategy and the
+d314 1
+a314 1
+can only be achieve at the expense of the other.
+d327 1
+a327 1
+display the equilibrium payoffs.
+d344 7
+a350 2
+Graphically, this is displayed with the row player's payoff
+in the horizontal direction as
+d364 3
+a366 2
+For the 11 strategies of the full game, the symbols are too
+numerous, and only the lines are displayed, as in
+d384 1
+a384 1
+The left endpoint of each line show how each row performs
+d391 1
+a391 1
+pairs.
+@
+
+
+1.6
+log
+@killed last
+@
+text
+@d22 1
+a22 1
+\graphicspath{ {./images/} }
+d169 1
+a169 1
+It will copied and updated with a new date at the next
+d334 1
+a334 1
+The five columns of $(A,B)$ are the strategies 
+d339 6
+a344 4
+performs the same as {\tt guess130} (with payoff pairs
+$5294,3982$, but usually {\tt fight130} is much more
+aggressive and therefore listed last.
+Graphically, this is displayed as
+d346 1
+a346 1
+\includegraphics[width=13cm]{Pareto-manual.eps}
+d348 1
+a348 1
+which is generated (in directory {\tt ./Plot/})
+d352 5
+a356 1
+to produce the output file {\tt Pareto-manual.pdf} :
+d358 39
+@
+
+
+1.5
+log
+@safety copy
+@
+text
+@d301 1
+a301 1
+The size of $(A,B)$ was here $11\times 5$.
+d310 9
+d326 5
+a330 2
+display the equilibrium payoffs.\\
+Example: consider the first two rows of $(A,B)$:
+d334 13
+a346 1
+which are generated with (in directory {\tt ./Plot/})
+a350 437
+\\
+\includegraphics[width=13cm]{Pareto-manual.eps}
+\\
+\R{[Bug: {\tt Pareto-manual.pdf} is actually an .eps file and
+has to be named as such, or the first line of {\tt gplot}
+and as generated in {\tt play.py} amended to create .pdf
+output.]}
+
+
+\end{document}
+
+
+\bullitem
+in each period, the optimal action (price $p_i$) of a firm
+$i$ depends only on its \textit{own}
+current demand potential $D_i$
+(where $p_i$ increases with $D_i$) and its cost $c_i$ (where
+$p_i$ decreases with $c_i$), and the discount factor if used.
+That is, the other players are anonymous (this makes sense
+from the game rules). 
+\bullitem
+prices quickly converge to a stable value, with a short
+  ``end effect'' in the last periods where prices rise.
+\bullitem
+prices are relatively low and favor firms with lower
+  costs, with substantially lower profits compared to myopic
+  monopoly price-setting.
+
+\section{The duopoly model in the tournament}
+
+In the tournament used for the strategy method (as well as
+in the round-by-round price setting among game playing
+subjects), the game was between two players, as a duopoly.
+The low-cost firm had cost $c_1=57$ and the high-cost firm
+cost $c_2=71$, and a starting demand potential of
+$D_1=D_2=200$.
+(Also a discount factor of 1 percent per round; this was
+apparently not of relevance for any partipants.)
+The number of rounds was 25. Players have perfect
+information about the past but not about the chosen price of
+the other player in the current round.
+The demand potential is adjusted so that firm $i$ gains from
+its opponent one ``customer'' (increase of $D_i$) for each
+price unit that it is cheaper than the opponent in the
+current time period~$t$.
+That is, with the demand potentials and prices now
+superscribed with the current time period $t$\,:
+% where $3-i$ is the opponent firm for $i=1,2$:
+\begin{equation}
+\label{demand}
+\begin{array}{rcl}
+D_1^{t+1}&=&D_1^t+\frac12({p_{2}^t-p_1^t})\,,
+\\[1ex]
+D_2^{t+1}&=&D_2^t+\frac12({p_{1}^t-p_2^t})\,.
+\end{array}
+\end{equation}
+
+(Selten showed that the analysis of the SPE is valid as long
+as the combined proportionality factor, here
+$1=\frac12+\frac12$, of the ``inertia
+adjustment'' does not exceed~2.)
+
+The aggressive SPE prescribes low prices, near about 95 in
+the middle stretch of rounds, with cumulative profits of 
+137k and 61k for the low- and high-cost firm, and a demand
+split for them of about 222 and 178, respectively.
+The corresponding cooperative myopic monopoly profits are 
+156k and 109k, a demand split of 207 and 193, and a much
+higher stabilizing price of 132.
+
+Tournament participants submitted a separate strategy (in
+the form of a flowchart for computing the current price)
+for both the low-cost and the high-cost player.
+Different costs were chosen because this makes it harder to
+identify a focal point of ``cooperative'' behavior which would
+be given, by symmetry, if costs were the same (namely an
+equal split of the demand potential). 
+
+The tournament had 45 participants in the first round and 34
+participants in the second round.
+\citet{Keser1992} analyzes and classifies the different types of
+strategies, according to their cooperativeness and
+vulnerability, with various statistical analyses.
+
+\section{My strategy}
+
+I was one of the participants and had the best-scoring
+high-cost strategy (as participant number 10)
+in the second round (among 34
+participants), and a near-best low-cost strategy.
+The challenge was that there was only guesswork about how
+any opponent would behave.
+My strategy
+\bullitem
+aimed for a cooperative split of the demand potentials of 
+  207 and 193 as in the myopic outcome;
+\bullitem
+would choose a moderately lower price (minus 7) compared
+  to myopic monopoly pricing as this would lose little in a
+  repeated setting compared to ``full cooperation'', but would
+  always gain extra ``customers'' for the next round; 
+\bullitem
+used, uniquely among all strategies, a \textit{predicted} price
+  of the opponent for the next period with a very simple
+  linear model based on the opponent's demand potential (in
+  effect, mimicking my own strategy, so that it would
+  quickly stabilize when playing against myself);
+  % see \citet[p.]{Keser1992};
+\bullitem
+based on this prediction immediately ``fought back'' to claw
+back my demand potential if that fell below 207 resp. 193;
+
+\bullitem
+as a feature of the second tournament after I observed
+  better strategies in the first tournament: exploit
+  ``suckers'' that do not claw back their demand potential by
+  keeping a low price even when having an own ``undeserved''
+  high demand potential, because a low price and many
+  customers would still give high profits; this was achieved
+  by the very simple device of never setting a price above
+  125 (which is 7 less than the ``cooperative'' price of 132). 
+  See \citet[page 81]{Keser1993}.
+
+It was clearly of help understanding the game mechanics
+well.
+
+\section{More details on game mechanics}
+
+The following has not yet been implemented as a strategy,
+but may lead to models of opponents.
+
+Suppose we start with the prices that are stable in the
+myopic monopoly setting:
+Recall that the per-unit cost of the Low-cost firm is 57, of the
+High-cost firm 71.
+The ``myopic'' demand potential split is $D_1=207$,
+$D_2=193$ with an optimal price of 132 for both, 
+with a profit of $(207-132)(132-57)=75^2=5625$ for the
+low-cost firm and a profit of $(193-132)(132-71)=61^2=3721$
+for the high-cost firm per time period.
+
+Now suppose Low-cost reduces this price by $x$.
+Its current profits reduce from
+$75^2$ to $(75+x)(75-x) = 75^2-x^2$,
+a quadratic loss that is very small when $x$ is small.
+The \textit{gain} is strong: in the next period, the firm
+has $x$ additional customers, because $D_1$ has increased
+by~$x$.
+
+For example, if $x=5$ then its profit per sold unit
+is 70, which in the next period (with the same price) means
+its profits increase by $5\times70=350$ against the negligible 
+loss of 25 in the current period.
+That's why I chose $x=7$ (a current loss of 49) against a 
+gain of $7\times(75-7)=7\times68=476$ in the next period.
+Of course, this is cancelled if the opponent does the same,
+so this is mildly (but only mildly) competitive.
+
+One can carry this to the extreme: choosing $x=37.5$,
+sacrificing $37.5^2=1406.25$ in the current period and
+reducing the profit per unit to 37.5 (instead of 75),
+then the firm has 37.5 more customers in the next period,
+from which it gains the new profit of 37.5 per unit, i.e.,
+the amount of $37.5^2=1406.25$ that it just lost.
+The resulting price is $132-37.5 = 94.5$, which is
+approximately the SPE price of the low-cost firm, which does
+not look like a coincidence to me.
+(Selten's computation is different and complicated by the
+discount factor, here 1 percent.)
+I have not carried through the game-theoretic analysis but
+this comparison of marginal gains might give a concise
+justification for the (very aggressive) SPE behavior.
+
+Another consideration is how to beat a \textit{tit-for-tat}
+strategy that \textit{copies} the opponent's
+price from the previous period (and starts out being
+``nice'').
+My intuition is that the firm facing this tit-for-tat
+strategy should steal as many customers as possible from in
+the first round with a low price (rather than doing so
+gradually, to be proved) and then keep the same price so
+that the demand potential is constant from then on.
+
+Here is an analysis against tit-for-tat:
+Suppose the firm's current demand potential
+is $D=200$, its cost is $c$, and its opponent chooses a price
+of $q$ in the first period. The firm chooses a single price
+$p$ throughout, and ignores its payoff in the first round.
+Its demand potential from then on will be $D^* = D + q - p$,
+and its future profits per period will be $(D^* - p)(p - c)$,
+which is equal to $(D + q - 2p)(p-c)$ or $2(D/2 + q/2 -
+p)(p-c)$, and maximized by $p = (D/2 + q/2 + c)/2$
+(the midpoint between the zeros of the previous parabola
+in~$p$).
+For example, if $c=57$ and $D=D_1=200$ and $q=134$ (a bit below the
+myopic price of $(200+71)/2$ for the high-cost opponent)
+then $p = (100 + 67 + 57)/2 = 112$. 
+The firm's demand potential 
+jumps to 222 and its future profits per period are
+$(222-112)(112-57) = 6050$.
+
+I wonder if this is stable and the firm can still keep stealing
+slowly (and if so should maybe do so from the beginning,
+which above I conjectured \textit{not} to be the right way to start). 
+
+However, the high-cost opponent may anticipate this action,
+that is, not be ``nice'' in the first period, and choose
+$q=104+\frac23$ (which
+is the solution to $q = (100 + q/2 + 57)/2$).
+Then the firm's demand 
+potential does not change at all ($D=D^*$) and its profits
+will be a measly $(200-q)(q-57)\approx 4544$ and those of
+the opponent only 3210 per period (they deserve less with
+their high costs).
+
+All these are observations about how to optimize a firm's
+unilateral payoffs, which are not game-theoretic.
+They may be useful examples of modeling other agents.
+
+\section{The evolutionary tournament: a surprise}
+\label{s-evol}
+
+In the (unannounced) evolutionary tournament, \citet{Keser1992}
+put the mutual results among the 34 strategies (for both
+firms) of the second tournament into a $34\times 34$ bimatrix
+game.
+Starting from equal populations shares of $1/34$, this was
+then put into a model of discrete replicator dynamics, where 
+the population share of each firm increased or decreased
+according to its performance in the current population mix.
+In addition, new ``mutant'' entrants where added at the rate
+of about $10^{-7}$ per round so that no strategy ever died out,
+even if it performed poorly.
+This dynamics was then run over 100,000 rounds and the
+resulting proportions recorded, which oscillated around 
+a small number of strategies that survived with significant
+fractions.
+
+The main fractions where two cooperative strategies with 
+fractions of about 0.6 and 0.3. My own ``best'' high-cost
+strategy against a uniform distribution of 34 opponents had
+a fraction of 0.05.
+A mixed Nash equilibrium with support size 4 on both sides
+was found that included these strategies that had high
+fractions in the populations, and mixed strategy
+probabilities near the average fractions in the dynamic
+round (which were not stable but had an apparent orbit).
+
+A possible explanation why my own ``clever'' strategy had the
+low population share was possibly my exploitation of
+``suckers'' that led to a different treatment of my opponents.
+In a mixed Nash equilibrium, all strategies in the support 
+need to have equal payoffs. This constraint would not
+tolerate my strategy with a high mixed-strategy probability,
+which is determined by the opponent payoffs, because it
+treated opponents so differently.
+
+If there had been a third round aimed at doing well in the
+evolutionary tournament, I would have re-designed my
+strategies with this goal in mind.
+
+\section{Issues of conducting a third ``evolutionary'' tournament}
+
+\citet[page 110]{Keser1992} writes:
+``We might suspect that the subjects would develop their
+strategies further if they played more rounds. Some subjects
+submitted for the second tournament strategies with a
+structure completely different from their strategies of the
+first tournament. In the evolutionary tournament, however,
+we restrict the strategy set to the strategies participating
+in the second tournament. New strategies cannot evolve
+during the evolutionary process. Ignoring this problem, we
+might consider our result as a hint where the trend might go
+to if we repeated our tournament strategies more often:
+cautiously cooperative to moderately aggressive strategies.''
+
+There are a number of questions here:
+\rmitem{a.}
+Methodological -- how would one conduct further rounds?
+   Ask participants to submit flowcharts each time? How
+   often?
+\rmitem{b.}
+What is the aim of the study?
+\subbull
+(presumably) find out how subjects approach this
+     problem;
+\subbull
+(questionable) model a market of pairwise interaction;
+     it is not clear what a model of random pairwise
+     interactions represents: e.g., in each
+     village/neighbourhood/street, at most two stores can
+     open, and how should they compete?
+     A more adequate model could be that of an oligopoly
+     with $n=34$ participants, but then the game is played
+     very differently, with a fight for a ``global'' market
+     share. But this is an altogether different game.
+     Maybe accuracy of the model should not be an issue for
+     a beginning theoretical investigation.
+
+\rmitem{c.}
+I think it is interesting to even address the problem of how
+to do well in an evolutionary setting (see end of
+Section~\ref{s-evol} above).
+That is, I would like to extend my own strategy in this
+respect. But what are my opponents, and how should I
+test my strategy?
+
+\rmitem{d.}
+% In the quote by \citet{Keser1992} at the beginning of this
+In the quote by Keser at the beginning of this
+section, \textit{evolve} is a crucial word.
+How could one parameterize a strategy to run the 25-round
+game (in the pairwise interaction setting) to
+\textit{learn} how to play it? Maybe with neural net?
+\rmitem{e.}
+Maybe it is worth abstracting from the duopoly setting
+altogether, and just call it a ``base game'' that has
+certain constraints of acting cooperatively or
+noncooperatively, with a set of payoff pairs for the two
+players (these constraints would have to be chosen
+interestingly enough, and not just model a Prisoner's
+dilemma interaction). 
+
+\section{What is optimal behavior?}
+\label{s-opt}
+
+Continuing from d.\ in the previous section,
+suppose we want to ``learn'' how a firm plays \textit{well}
+in this game, say with a neural net that computes current
+prices with some inputs such as current demand potential and
+(possibly the whole) history.
+
+The question is \textit{how to measure this}.
+In the first two Keser tournaments, it was the performance
+against the uniform distribution of opponents.
+
+The third evolutionary tournament used a replicator dynamics
+(with small-probability random entrants from the existing
+pool) and looked at the surviving strategies. 
+This probably depends on the starting distribution; e.g.,
+playing the SPE strategies against each other should be a 
+pure and probably strict equilibrium and thus an ESS
+(evolutionary stable strategy).
+
+My original question (as a participant in a third round) was
+how to \textit{design} (rather than learn) a strategy that
+does well in the evolutionary setting, i.e., survive with a
+high frequency.
+
+An analytical derivation (such as ``treat your opponents
+equally'') is probably difficult, but one could
+\textit{compare} how a good strategy against a uniform
+distribution does in an evolutionary setting, or some other
+distribution, maybe with that distribution chosen as a
+starting point.
+(For a general game, I am sure initially successful
+strategies can quickly die out.)
+
+\section{Simplifying / specifying the base game}
+
+The 25-period duopoly game is kind of complicated, but could
+be simplified as follows:
+\bullitem
+(Suggested by Simina Br\^anzei.)
+  Drop the end effect and run the game forever, with the
+  discount factor $\delta<1$ as the probability that the game
+  continues to the next round, and expected running time
+  $1/(1-\delta)$ (and long runs exponentially unlikely).
+  Simulations would need to be done multiple times to get
+  good averages.
+\bullitem
+Identify the characteristics of the game via a parameter
+that specifies a range of ``cooperative'' versus
+``competitive'' behavior.
+The result is probably a kind of
+continuous Prisoner's Dilemma, let's call it a
+``one-parameter PD''.
+It may be useful to distill this as the essence of the
+duopoly game. Or maybe we need two parameters? Probably this
+makes quite a difference.
+
+Related is what I find attractive about the tournament so
+far: A participant \textit{designs} their own strategy, without
+knowledge of what opponent to expect. So while the rules of the
+dynamic ``base game'' (the 25-round duopoly game) are clear,
+the available strategies are so vast that one doesn't just
+pick some row of a big bimatrix game, but designs and
+explores the possible strategies.
+
+In this setting, rather than just studying some evolutionary
+dynamics, the player has \textit{agency}
+in playing the game by picking a strategy.
+This is a bit vague but I think combining agency (rational
+analysis) and evolutionary adaption (no agency, just
+reproductive fitness) is an interesting, possibly new topic.
+The catchy title of such a study could be 
+``Agency and evolutionary fitness''.
+Suppose we have a one-parameter PD game where the agency
+consists in picking that parameter. Is this still
+interesting?
+
+\section{Related work}
+
+This is not a full study yet and related work is surely
+vast.
+
+Of interest is \citet{calvano2020} (and its summary on a
+blog at 
+\url{https://www.law.ox.ac.uk/business-law-blog/blog/2019/02/artificial-intelligence-algorithmic-pricing-and-collusion}).
+They use a Bertrand model of competition (which is also
+price-setting, although its relationship to Selten's model
+of demand inertia will need to be examined).
+Their findings show that agents using Q-learning learn how
+to become semi-collusive based on their own learning,
+without communication.
+
+Our proposed approach in Section~\ref{s-opt}
+based on Selten's model has the
+``design'' aspect (actively designing a good strategy) 
+and its comparison with \citet{Keser1992}
+as an additional feature, but may confirm these findings.
+
+% Claudia Keser (1992), Experimental Duopoly Markets with
+% Demand Inertia: Game-Playing Experiments and the Strategy
+% Method. PhD thesis, University of Bonn, and Vol. 391 of
+% Lecture Notes in Economics and Mathematical Systems,
+% Springer Verlag.
+% 
+% Claudia Keser (1993), Some results of experimental duopoly
+% markets with demand inertia. Journal of Industrial Economics
+% 41(2), 133-151.
+% 
+% Reinhard Selten (1965), Spieltheoretische Behandlung eines
+% Oligopolmodells mit Nachfragetraegheit. Zeitschrift fur die
+% Gesamte Staatswissenschaft 121, pp. 301-324 and pp. 667-689.
+% \strut
+
+a351 2
+%\bibliographystyle{ecta}
+%\bibliographystyle{acm}
+@
+
+
+1.4
+log
+@comments merged to .py
+@
+text
+@d233 69
+a301 1
+In \projfile, Section 
+@
+
+
+1.3
+log
+@more
+@
+text
+@d22 1
+d89 1
+a89 1
+\date{August 3, 2022
+d107 2
+a108 1
+runs of the experiments, and lists open questions. 
+d111 1
+d113 17
+a129 5
+\def\dirname{{\tt 03Aug2022/}}
+\def\equifile{{\tt equi9x5}}
+\def\projfile{{\tt Evol-28Jul2022.pdf, Evol-28Jul2022.tex}}
+\def\codepdf{{\tt 03Aug2022-play.pdf}}
+\section{File inventory}
+d133 1
+a133 1
+\rmitem{main Python file:} {\tt play.py} (run with python3).
+d135 1
+a135 1
+\rmitem{documentation:} {\tt comments}
+d140 1
+a140 1
+\rmitem{this file:} {\tt Readme.pdf, Readme.tex}
+d174 3
+a176 1
+management in git, whereas the current code is still small.
+d192 1
+a192 1
+a method {\tt match} to match any two strategies against each other
+d194 1
+a194 1
+a method {\tt tournament} to match all low-cost strategies
+d204 1
+d209 21
+a229 6
+The file {\tt comments} explains the Python code in more
+detail with reference to its line numbers in \codepdf.
+This is not to clutter the Python file itself, \R{but the
+reference to line numbers is likely to outdate quickly.
+Maybe put these comments into the Python code after all?
+Using better documentation tools?}
+d231 3
+a233 4
+\bullitem
+The output to standard terminal is recorded in
+{\tt output}.
+See {\tt comments}.
+d238 3
+a240 1
+that reflect how the two players cooperate or compete.
+@
+
+
+1.2
+log
+@more
+@
+text
+@d109 5
+d117 3
+a119 3
+\rmitem{directory name:} {\tt 03Aug2022/}
+\rmitem{main Python file:} {\tt play.py}
+\rmitem{code with line numbers:} {\tt 03Aug2022-play.pdf}
+d122 1
+a122 1
+\rmitem{computed equilibria:} {\tt equi9x5}
+d124 1
+a124 1
+\rmitem{project description:} {\tt Evol-28Jul2022.pdf, Evol-28Jul2022.tex}
+d132 1
+a132 2
+The projection description file \ {\tt Evol-\it date\tt.pdf}
+\
+d137 2
+a138 1
+experiments to continue this research, combined with
+d150 83
+a232 2
+The current directory, named by date, is meant to contain
+a complete 
+d234 1
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d6 2
+a7 1
+\usepackage{inconsolata} 
+d77 2
+a78 1
+Computational Experiments for Evolutionary Pricing Games
+d83 3
+a85 3
+\thanks{Department of Mathematics,
+London School of Economics, London WC2A 2AE, United Kingdom.
+Email:  b.von-stengel@@lse.ac.uk}
+d120 1
+a120 1
+\rmitem{this file:} {\tt Compute.pdf, Compute.tex}
+d125 22
+a147 1
+\section{Description of the model and investigation}
+a148 65
+\citet{Keser1992} conducted and analyzed a tournament competition
+between game theorists. Her work belongs to experimental
+economics.
+The goal was to find out how people behave in a relatively
+complex game-theoretic scenario.
+A certain dynamic duopoly game was played
+in two ways: among subjects who pairwise play against each
+other in a laboratory, and -- which is the topic of this note
+-- according to the ``strategy method''
+\citep[see][]{brandts2011}.
+In the present setting, subjects submit an explicit strategy
+in the form of a flowchart.
+The strategies were solicited from a forum of academic game
+theorists, who submitted their strategies. These strategies
+were played
+against each other in a tournament, and ranked according to
+their cumulative payoffs. The results were sent back to the
+participants who could then submit a new strategy, with a
+new second tournament.
+% The number of participants in the first tournament was 45
+% and in the second tournament 34.
+
+A third part of the study is reported in \citet[pages
+97--110]{Keser1992}, called an ``evolutionary tournament'',
+based on the strategies of the second tournament.
+This part of the study had not been announced to the
+participants, and was not conducted further (nor published
+in the journal article \citealp{Keser1993}). I explain
+possibilities and issues of possibly
+continuing this part of the study.
+
+\section{The oligopoly model} 
+
+The model is a classic oligopoly game analyzed by \citet{Selten1965}
+with the concept of subgame perfect equilibrium
+(SPE). The game is played over a fixed number of rounds $T$ or,
+with discounted payoffs, infinitely often (the infinite case
+is analyzed in part II of Selten's paper, not cited).
+There are $n$ firms.
+Each firm $i$ has a certain ``market strength'', called a
+\textit{demand potential} $D_i$, that determines its number of
+$D_i-p_i$ of sold units of a good when setting a price $p_i$
+(firm $i$'s decision in each period),
+with a profit of $p_i-c_i$ per unit for the firm's production cost
+$c_i$.
+
+The myopic monopoly profit maximizes $(D_i-p_i)(p_i-c_i)$
+when $p_i=(D_i+c_i)/2$.
+This is the optimal action of the firm in the final round
+when played over $T$ rounds.
+
+The model has the following feature of \textit{demand
+inertia}:
+At the start of the $T$ periods, each firm $i$ has the same
+demand potential $D_i$.
+After each round, the demand potential is changed for the
+next round in proportion to the difference of the firm's
+price $p_i$ and the average price of all firms, where firms
+with lower prices gain and firms with higher prices lose
+demand potential (the sum of demand potentials stays the
+same).
+
+The SPE found by Selten, found by backward induction from
+the action in the final round parameterized by the demand
+potentials, has the following features: 
+@

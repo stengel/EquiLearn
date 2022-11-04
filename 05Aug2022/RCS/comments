@@ -1,0 +1,116 @@
+Required: directory ./PLOT to exist
+
+Comments on play.py from Aug 03, 22 12:53
+03Aug2022-play.pdf
+using line numbers
+
+1 #!/usr/bin/python3 
+tells Linux which program to use if file is executable.
+
+3 numpy: the numerical python package, abbreviated as np
+4 printoptions: output limited to 2 digits after decimal point
+5 re: regular expressions, used in cleanbrackets
+
+8,9 players are numbered 0,1
+13 demandpotential: two lists for the two players, T rounds
+14,15 init in first round 0
+16 prices over T rounds
+17 profit in each of T rounds
+
+19 monopolyprice for period t
+
+22 updatePricesProfitDemand(pricepair,t)
+  pricepair = list of length two of prices in round t
+  updates prices,profit,demandpootential 
+
+33 totalprofit() pair of total profits over T periods
+35 avgprofit() pair of average profit per round
+
+39 match(stra0, stra1)
+   matches two strategies, which are functions, against each other
+   stra0(t) computes the price of player 0 in round t
+   stra1(t) computes the price of player 1 in round t
+45,46 makes sure price is no lower than cost
+48 returns pair of average profits per round
+
+50 tournament(strats0, strats1)
+   strats0,strats1 are lists of strategies for players 0,1
+61 all matched against each other
+62 output is pair A,B of payoff matrices
+
+64 cleanbrackets(astring)
+   formats matrix string as in 79:
+   cleanbrackets(np.array_str(A))
+   to have no brackets for payoff matrices A,B in
+   http://banach.lse.ac.uk (uses lrsnash)
+
+70 outgame (A,B,divideby)
+   generates A,B payoff matrices for use with lrsnash
+   divides entries by divideby (e.g. 10) to get fewer digits.
+   all payoffs are rounded decimals
+71,72 matrix dimensions m,n inferred from A
+80-90 output for gnuplot plots
+
+93-156 various strategies with parameters
+
+94 myopic strategy (monopoly price in each round)
+
+97 constant-price strategy 
+99 except in last round
+
+102 imit(player, firstprice, t)
+    firstprice = price in round 0
+    from then on copies price of opponent from last round
+
+109 fight(player, firstprice, t)
+    first attempt at a fighting strategy:
+110 firstprice = price in round 0 
+113 last round monopolyprice
+114 aspiration levels for demand potential
+115 D = current demandpotential
+116 Asp = wanted demandpotential
+117 if achieved, keep price (DANGER: price will never go up)
+121 assuming the opponent will use same price as in last round,
+    own price has to be reduced by twice the negative amount
+    D - Asp to move demand potential to Asp in the next round
+122 never price higher than 125
+
+125-156 sophisticated fighting strategy (compare fight, 109-123)
+125 keeps an *estimate* of how many units the *opponent* plans
+    to sell as oppsaleguess[player], global variable between
+    rounds, updated in 149. 
+    Assumed first as in monopoly situation.
+126 guess(player, firstprice, t)
+    "guesses" unknown opponent price in current round.
+    assumption: opponent price depends on their demand
+    potential so that they want to sell a certain number of
+    units. I.e. higher demand potential means higher price.
+134-142: if aspiration level for demand potential is met,
+    allow prices to go back higher to move back towards
+    cooperation, defined as monopoly price minus 7 (lines 139, 142).
+142 keep current price with 60%, go towards cooperation price 40%
+143-151: estimate and react to opponent price
+144 previous opponent sales (units sold); assumed to be the
+    determining variable rather than price
+146 alpha means weight of this variable from previous period
+    alpha = .5 means old value kept at 50%
+    (alpha = .8 would mean old value kept at 80%, slower adjustment)
+150 estimate used for opponent price 
+151 ... to meet aspired target for demand potential
+153,155 but never too high prices to target suckers
+
+158-169 are 11 strategies for low-cost player 0,
+    but reduced to 9 (lines 165,166 later unused)
+    lambda reduces strategy to a single parameter t as used by match()
+172-184 manually set information strings about these
+    strategies; automatic extraction from function names too
+    cumbersome because of different parameter numbers.
+186-199 same for player high-cost player 1
+
+201-210 documents run over T rounds over strategy pair i,j
+    here the "guess" strategies 1,1
+    (would be too much for all strategy pairs)
+
+213-222 runs and outputs tournament, for banach.lse.ac.uk (lrsnash)
+220 check that strats0 and stratsinfo0 match in length
+221,222 information about used strategies
