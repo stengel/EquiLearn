@@ -1,2 +1,2 @@
 # EquiLearn
-mulit-agent learning and equilibrium
+multi-agent learning and equilibrium
