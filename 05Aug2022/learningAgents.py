@@ -46,16 +46,18 @@ class Model(DemandPotentialGame):
         self.state = self.initState
         return self.state, reward, self.done
 
+    def step(self, )
+
 
 
 
 class REINFORCEALgorithm():
     """
-        Model Solver
+        Model Solver.
     """
     def __init__(self, Model, policyNet, numberEpisodes) -> None:
         self.env = Model
-        self.environment.adversaryReturns = np.zeros(numberEpisodes)
+        self.env.adversaryReturns = np.zeros(numberEpisodes)
         self.returns = np.zeros(numberEpisodes)
         self.policy = policyNet
         self.numberEpisodes = numberEpisodes
@@ -75,23 +77,23 @@ class REINFORCEALgorithm():
                 state, reward, done, _ = env.step(action.item())
                 
                 episodeMemory.append((prev_state, action, reward))
-                self.stage += 1
+                self.env.stage += 1
 
-        states = torch.stack([item[0] for item in episodeMemory])
-        actions = torch.tensor([item[1] for item in episodeMemory])
-        rewards = torch.tensor([item[2] for item in episodeMemory])
+            states = torch.stack([item[0] for item in episodeMemory])
+            actions = torch.tensor([item[1] for item in episodeMemory])
+            rewards = torch.tensor([item[2] for item in episodeMemory])
 
-        action_probs = policy(states)
-        action_dists = Categorical(action_probs)
-        action_logprobs = action_dists.log_prob(actions)
+            action_probs = policy(states)
+            action_dists = Categorical(action_probs)
+            action_logprobs = action_dists.log_prob(actions)
 
-        returns = self.returns(reward, episodeMemory)
+            returns = self.returns(reward, episodeMemory)
 
-        loss = - ( torch.sum(returns*action_logprobs) )/len(episodeMemory)
+            loss = - ( torch.sum(returns*action_logprobs) )/len(episodeMemory)
 
-        optim.sero_grad()
-        loss.backward()
-        optim.step()
+            optim.zero_grad()
+            loss.backward()
+            optim.step()
 
     def returns(self, reward, episodeMemory):
         return torch.tensor( [torch.sum( reward[i:]*
