@@ -7,14 +7,14 @@ import numpy as np # numerical python
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
 
-sys.append("../../05Aug2022")
 
-classself.demandPotentialGame():
+
+class DemandPotentialGame():
     """
         Fully defines demand Potential Game. It contains game rules, memory and agents strategies.
     """
     
-    def __init__(self, totalDemand, tupleCosts, adversaryPolicy, totalStages) -> None:
+    def __init__(self, totalDemand, tupleCosts, totalStages) -> None:
         self.totalDemand = totalDemand
         self.costs = tupleCosts
         self.T = totalStages
@@ -42,7 +42,7 @@ classself.demandPotentialGame():
             price = pricepair[player]
             self.prices[player][self.stage] = price
             self.profit[player][self.stage] = (self.demandPotential[player][self.stage] - price)*(price - self.costs[player])
-            if t<T-1 :
+            if self.stage < self.T-1 :
                 self.demandPotential[player][ self.stage + 1] = \
                     self.demandPotential[player][self.stage] + (pricepair[1-player] - price)/2
 
@@ -50,27 +50,26 @@ classself.demandPotentialGame():
     def monopolyPrice(self, player, t): # myopic monopoly price 
         return (self.demandPotential[player][self.stage] + self.costs[player])/2 
 
-    # Adversary strategies with varying parameters
     def myopic(self, player = 0): 
-        return monopolyprice(player, self.stage)    
+        return self.monopolyPrice(player, self.stage)    
 
     def const(self, player, price): # constant price strategy
         if self.stage == T-1:
-            return monopolyprice(player, self.stage)
+            return monopolyPrice(player, self.stage)
         return price
 
     def imit(self, player, firstprice): # price imitator strategy
         if self.stage == 0:
             return firstprice
         if self.stage == T-1:
-            return monopolyprice(player, self.stage)
+            return monopolyPrice(player, self.stage)
         return self.prices[1-player][t-1] 
 
     def fight(self, player, firstprice): # simplified fighting strategy
         if self.stage == 0:
             return firstprice
         if self.stage == T-1:
-            return monopolyprice(player, self.stage)
+            return monopolyPrice(player, self.stage)
         aspire = [ 207, 193 ] # aspiration level for demand potential
         D =self.demandPotential[player][self.stage] 
         Asp = aspire [player]
@@ -95,13 +94,15 @@ classself.demandPotentialGame():
             oppsaleguess[0] = 61 # always same start 
             oppsaleguess[1] = 75 # always same start 
             return firstprice
+
         if self.stage == T-1:
-            return monopolyprice(player, self.stage)
+            return monopolyPrice(player, self.stage)
         aspire = [ 207, 193 ] # aspiration level
         D =self.demandPotential[player][self.stage] 
         Asp = aspire [player]
+
         if D >= Asp: # keep price, but go slightly towards monopoly if good
-            pmono = monopolyprice(player, self.stage)
+            pmono = monopolyPrice(player, self.stage)
             pcurrent = self.prices[player][self.stage-1] 
             if pcurrent > pmono: # shouldn't happen
                 return pmono
@@ -109,6 +110,7 @@ classself.demandPotentialGame():
                 return pcurrent
             # current low price at 60%, be accommodating towards "collusion"
             return .6 * pcurrent + .4 * (pmono-7)
+
         # guess current *opponent price* from previous sales
         prevsales =self.demandPotential[1-player][t-1] - self.prices[1-player][t-1] 
         # adjust with weight alpha from previous guess
@@ -118,6 +120,7 @@ classself.demandPotentialGame():
         oppsaleguess[player] = newsalesguess 
         guessoppPrice = 400 - D - newsalesguess 
         P = guessoppPrice + 2*(D - Asp) 
+        
         if player == 0:
             P = min(P, 125)
         if player == 1:
@@ -129,89 +132,89 @@ class Model(DemandPotentialGame):
     """
         Defines the Problem's Model. It is assumed a Markov Decision Process is defined.
     """
-    def __init__(self, totalDemand, tupleCosts, transitionFunction, initState) -> None:
-        super().__init__()
+    def __init__(self, totalDemand,tupleCosts,totalStages, initState) -> None:
+        super().__init__( totalDemand,tupleCosts,totalStages)
 
-        self.transitionFunction = transitionFunction
-        self.rewardFunction = profits
+        self.rewardFunction = self.profits
         self.initState = initState
         self.episodesMemory = list()
-
-        self.state = None
-
         self.done = False
 
     def reset(self):
         reward = 0
         self.stage = 0
-        self.state = self.initState
-        resetGame()
-        return self.state, reward, self.done
+        self.resetGame()
+        return torch.tensor(self.initState, dtype=torch.float32), reward, self.done
 
 
-    def adversaryChoosePrice(self) 
-        return myopic(1, self.stage)
+    def adversaryChoosePrice(self): 
+        return self.myopic(player = 1)
 
 
     def step(self, state, action):
-        adversaryAction = myopic(player = 1)
-        updatePricesProfitDemand( myopic() - action, adversaryAction)
-        newState = (self.demandPotential[1][self.stage + 1], self.prices[1][self.stage])
+        adversaryAction = self.adversaryChoosePrice()
+        self.updatePricesProfitDemand( [self.myopic() - action, adversaryAction] )
+        newState = [ self.demandPotential[1][self.stage + 1], self.prices[1][self.stage] ]
         reward = self.rewardFunction()
+        self.stage = self.stage + 1
 
-        return newState, reward, self.stage < self.T
+        
+        return torch.tensor(newState, dtype=torch.float32), reward, self.stage == self.T-1
 
 
 
 
 
-class REINFORCEALgorithm():
+class ReinforceAlgorithm():
     """
         Model Solver.
     """
-    def __init__(self, Model, policyNet, numberEpisodes) -> None:
+    def __init__(self, Model, policyNet, optim, numberEpisodes) -> None:
         self.env = Model
         self.env.adversaryReturns = np.zeros(numberEpisodes)
         self.returns = np.zeros(numberEpisodes)
         self.policy = policyNet
         self.numberEpisodes = numberEpisodes
+        self.optim = optim
+        self.episodesMemory = list()
 
     def  solver(self):
 
-        for episode in range(numberEpisodes):
+        for episode in range(self.numberEpisodes):
             episodeMemory = list()
-            state, reward, done, _ = self.env.reset()
-
+            state, reward, done = self.env.reset()
+            retu = 0
             while not done:
                 prev_state = state
                 probs = self.policy(prev_state)
                 distAction = Categorical(probs)
                 action = distAction.sample()
 
-                state, reward, done, _ = env.step(prev_state, action.item())
-                
+                state, reward, done = self.env.step(prev_state, action.item())
+                retu = retu + reward
                 episodeMemory.append((prev_state, action, reward))
-                self.env.stage += 1
+
 
             states = torch.stack([item[0] for item in episodeMemory])
             actions = torch.tensor([item[1] for item in episodeMemory])
             rewards = torch.tensor([item[2] for item in episodeMemory])
 
-            action_probs = policy(states)
+            action_probs = self.policy(states)
             action_dists = Categorical(action_probs)
             action_logprobs = action_dists.log_prob(actions)
 
-            returns = returns(reward, episodeMemory)
+            returns = self.returnsComputation(rewards, episodeMemory)
 
             loss = - ( torch.sum(returns*action_logprobs) )/len(episodeMemory)
-
-            optim.zero_grad()
+            print(loss)
+            self.optim.zero_grad()
             loss.backward()
-            optim.step()
+            self.optim.step()
+            self.returns[episode] = retu
 
 
 
-    def returns(self, reward, episodeMemory):
-        return torch.tensor( [torch.sum( reward[i:]*
-        (gamma**torch.arange(i, len(episodeMemory) )) ) for in range(len(episodeMemory))] )
+    def returnsComputation(self, rewards, episodeMemory):
+        gamma = .9
+        return torch.tensor( [torch.sum( rewards[i:] * (gamma ** torch.arange(i, len(episodeMemory))) ) for i in range(len(episodeMemory)) ] )
 	 
