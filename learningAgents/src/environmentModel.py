@@ -153,7 +153,7 @@ class Model(DemandPotentialGame):
 
     def step(self, state, action):
         adversaryAction = self.adversaryChoosePrice()
-        self.updatePricesProfitDemand( [self.myopic() - action, adversaryAction] )
+        self.updatePricesProfitDemand( [self.myopic() - action, adversaryAction] )      	
         newState = [ self.demandPotential[1][self.stage + 1], self.prices[1][self.stage] ]
         reward = self.rewardFunction()
         self.stage = self.stage + 1
