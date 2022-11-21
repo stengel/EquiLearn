@@ -63,7 +63,7 @@ class DemandPotentialGame():
             return firstprice
         if self.stage == T-1:
             return monopolyPrice(player, self.stage)
-        return self.prices[1-player][t-1] 
+        return self.prices[1-player][self.stage-1] 
 
     def fight(self, player, firstprice): # simplified fighting strategy
         if self.stage == 0:

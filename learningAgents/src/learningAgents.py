@@ -15,7 +15,7 @@ class ReinforceAlgorithm():
     """
         Model Solver.
     """
-    def __init__(self, Model, policyNet, optim, numberEpisodes) -> None:
+    def __init__(self, Model, policyNet, optim, numberEpisodes, discountFactor) -> None:
         self.env = Model
         self.env.adversaryReturns = np.zeros(numberEpisodes)
         self.returns = np.zeros(numberEpisodes)
@@ -23,6 +23,7 @@ class ReinforceAlgorithm():
         self.numberEpisodes = numberEpisodes
         self.optim = optim
         self.episodesMemory = list()
+        self.gamma = discountFactor
 
     def  solver(self):
 
@@ -41,12 +42,13 @@ class ReinforceAlgorithm():
                 episodeMemory.append((prev_state, action, reward))
 
 
-            states = torch.stack([item[0] for item in episodeMemory])
-            actions = torch.tensor([item[1] for item in episodeMemory])
+            states = torch.stack([item[0] for item in episodeMemory])    
+            actions = torch.tensor([item[1] for item in episodeMemory]) 
             rewards = torch.tensor([item[2] for item in episodeMemory])
 
-            action_probs = self.policy(states)
-            action_dists = Categorical(action_probs)
+
+            action_probs = self.policy(states) # batch (10, 15)
+            action_dists = Categorical(action_probs) 
             action_logprobs = action_dists.log_prob(actions)
 
             returns = self.returnsComputation(rewards, episodeMemory)
@@ -61,6 +63,5 @@ class ReinforceAlgorithm():
 
 
     def returnsComputation(self, rewards, episodeMemory):
-        gamma = .9
-        return torch.tensor( [torch.sum( rewards[i:] * (gamma ** torch.arange(i, len(episodeMemory))) ) for i in range(len(episodeMemory)) ] )
+        return torch.tensor( [torch.sum( rewards[i:] * (self.gamma ** torch.arange(i, len(episodeMemory))) ) for i in range(len(episodeMemory)) ] )
 	 
