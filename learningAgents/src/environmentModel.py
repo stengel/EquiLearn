@@ -183,12 +183,12 @@ class Model(DemandPotentialGame):
 
 
     def step(self, state, action):
-    	"""
-    	Transition Function. 
-    	Parameters:
-    	- action: Price
-    	- state: tupple in the latest stage (Demand Potential, Price)
-    	"""
+        """
+        Transition Function. 
+        Parameters:
+        - action: Price
+        - state: tupple in the latest stage (Demand Potential, Price)
+        """
         adversaryAction = self.adversaryChoosePrice()
         self.updatePricesProfitDemand( [self.myopic() - action, adversaryAction] )          
         newState = [ self.demandPotential[1][self.stage + 1], self.prices[1][self.stage] ]
