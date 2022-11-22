@@ -1,3 +1,6 @@
+# Francisco, Sahar, Edward
+# ReinforceAlgorithm Class: Solver.
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -28,9 +31,16 @@ class ReinforceAlgorithm():
         self.optim = None
 
     def resetPolicyNet(self):
+        """
+            Reset Policy Neural Network.
+        """
         self.policy, self.optim = self.neuralNetwork()
 
     def  solver(self):
+        """
+            Method that performs Monte Carlo Policy Gradient algorithm. 
+        """
+
         for iteration in range(self.numberIterations):
             self.resetPolicyNet()
 
@@ -73,5 +83,8 @@ class ReinforceAlgorithm():
 
 
     def returnsComputation(self, rewards, episodeMemory):
+        """
+        Method computes vector of returns for every stage. The returns are the cumulative rewards from that stage.
+        """
         return torch.tensor( [torch.sum( rewards[i:] * (self.gamma ** torch.arange(i, len(episodeMemory))) ) for i in range(len(episodeMemory)) ] )
 	 
