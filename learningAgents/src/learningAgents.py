@@ -54,7 +54,7 @@ class ReinforceAlgorithm():
                 while not done:
                     prev_state = state
                     probs = self.policy(prev_state)
-                    distAction = Categorical(probs)
+                    distAction = Categorical(probs) # An action is the (integer) value by which we shade the myopic price.
                     action = distAction.sample()
 
                     state, reward, done = self.env.step(prev_state, action.item())
