@@ -51,7 +51,7 @@ class DemandPotentialGame():
         """
         Updates Prices, Profit and Demand Potential Memory.
         Parameters. 
-        pricePair: Pair of prcies from the Learning agent and adversary.
+        pricePair: Pair of prices from the Learning agent and adversary.
         """
 
         for player in [0,1]:
