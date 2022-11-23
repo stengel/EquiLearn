@@ -1,4 +1,5 @@
 import numpy as np
+from enum import Enum
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
@@ -54,23 +55,27 @@ class DemandPotentialGame():
         return self.monopolyPrice(player, self.stage)    
 
     def const(self, player, price): # constant price strategy
-        if self.stage == T-1:
+        if self.stage == self.T-1:
             return monopolyPrice(player, self.stage)
         return price
 
     def imit(self, player, firstprice): # price imitator strategy
         if self.stage == 0:
             return firstprice
-        if self.stage == T-1:
+        if self.stage == self.T-1:
             return monopolyPrice(player, self.stage)
         return self.prices[1-player][self.stage-1] 
 
     def fight(self, player, firstprice): # simplified fighting strategy
         if self.stage == 0:
             return firstprice
-        if self.stage == T-1:
+        if self.stage == self.T-1:
             return monopolyPrice(player, self.stage)
-        aspire = [ 207, 193 ] # aspiration level for demand potential
+        #aspire = [ 207, 193 ] # aspiration level for demand potential
+        aspire=[0,0]
+        for i in range(2):
+            aspire[i]= (self.totalDemand-self.costs[player]+self.costs[1-player])/2
+        
         D =self.demandPotential[player][self.stage] 
         Asp = aspire [player]
         if D >= Asp: # keep price; DANGER: price will never rise
@@ -80,7 +85,9 @@ class DemandPotentialGame():
         # the negative amount D - Asp to getself.demandPotential to Asp 
         P = self.prices[1-player][self.stage-1] + 2*(D - Asp) 
         # never price to high because even 125 gives good profits
-        P = min(P, 125)
+        # P = min(P, 125)
+        aspire_price= (self.totalDemand+self.costs[0]+self.costs[1])/4
+        P= min(P, int(0.95*aspire_price))
         return P
 
 
@@ -95,7 +102,7 @@ class DemandPotentialGame():
             oppsaleguess[1] = 75 # always same start 
             return firstprice
 
-        if self.stage == T-1:
+        if self.stage == self.T-1:
             return monopolyPrice(player, self.stage)
         aspire = [ 207, 193 ] # aspiration level
         D =self.demandPotential[player][self.stage] 
@@ -132,13 +139,14 @@ class Model(DemandPotentialGame):
     """
         Defines the Problem's Model. It is assumed a Markov Decision Process is defined.
     """
-    def __init__(self, totalDemand,tupleCosts,totalStages, initState) -> None:
+    def __init__(self, totalDemand,tupleCosts,totalStages, initState,adversaryMode) -> None:
         super().__init__( totalDemand,tupleCosts,totalStages)
 
         self.rewardFunction = self.profits
         self.initState = initState
         self.episodesMemory = list()
         self.done = False
+        self.adversaryMode=adversaryMode
 
     def reset(self):
         reward = 0
@@ -148,7 +156,27 @@ class Model(DemandPotentialGame):
 
 
     def adversaryChoosePrice(self): 
-        return self.myopic(player = 1)
+
+        if self.adversaryMode== AdversaryModes.constant_132:
+            return self.const(player=1,price=132)
+        elif self.adversaryMode== AdversaryModes.constant_95:
+            return self.const(player=1,price=95)
+        elif self.adversaryMode== AdversaryModes.imitation_128:
+            return self.imit(player=1,firstprice=128)
+        elif self.adversaryMode== AdversaryModes.imitation_132:
+            return self.imit(player=1,firstprice=132)
+        elif self.adversaryMode== AdversaryModes.fight_100:
+            return self.fight(player=1,firstprice=100)
+        elif self.adversaryMode== AdversaryModes.fight_125:
+            return self.fight(player=1,firstprice=125)
+        elif self.adversaryMode== AdversaryModes.fight_132:
+            return self.fight(player=1,firstprice=132)
+        elif self.adversaryMode== AdversaryModes.guess_125:
+            return self.fight(player=1,firstprice=125)
+        elif self.adversaryMode== AdversaryModes.guess_132:
+            return self.fight(player=1,firstprice=132)
+        else:
+            return self.myopic(player = 1)
 
 
     def step(self, state, action):
@@ -161,4 +189,18 @@ class Model(DemandPotentialGame):
         
         return torch.tensor(newState, dtype=torch.float32), reward, self.stage == self.T-1
 
- 
+class AdversaryModes(Enum):
+    myopic=0
+    constant_132=1
+    constant_95=2
+    imitation_132=3
+    imitation_128=4
+    fight_132=5
+    fight_125=6
+    fight_100=7
+    guess_132=8
+    guess_125=9
+    
+    
+    
+    

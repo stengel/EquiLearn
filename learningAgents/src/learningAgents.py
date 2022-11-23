@@ -26,6 +26,9 @@ class ReinforceAlgorithm():
         self.neuralNetwork = neuralNet  
         self.policy = None
         self.optim = None
+        
+        self.bestPolicy=None
+        self.bestAverageRetu = 0
 
     def resetPolicyNet(self):
         self.policy, self.optim = self.neuralNetwork()
@@ -67,6 +70,13 @@ class ReinforceAlgorithm():
                 self.optim.step()
 
                 self.returns[iteration][episode] = retu
+
+                
+            averageRetu= ((self.returns[iteration]).sum())/(self.numberEpisodes)
+            if (self.bestPolicy is None) or (averageRetu > self.bestAverageRetu):
+                self.bestPolicy=self.policy
+                self.bestAverageRetu=averageRetu
+            
 
 
 
