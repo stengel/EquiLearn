@@ -12,7 +12,7 @@ import numpy as np # numerical python
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
 
-
+# x
 
 class DemandPotentialGame():
     """
