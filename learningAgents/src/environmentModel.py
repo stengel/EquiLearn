@@ -79,7 +79,7 @@ class DemandPotentialGame():
         """
             Adversary follows Constant strategy
         """    
-        if self.stage == T-1:
+        if self.stage == self.T-1:
             return monopolyPrice(player, self.stage)
         return price
 
