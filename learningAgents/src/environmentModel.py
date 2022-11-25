@@ -1,8 +1,6 @@
 # Francisco, Sahar, Edward
 # Contains Game Class and Model of the Game Class.
 
-
-import numpy as np
 from enum import Enum
 import torch
 import torch.nn as nn
