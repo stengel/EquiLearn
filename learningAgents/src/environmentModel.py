@@ -5,7 +5,7 @@ from enum import Enum
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
-import sys
+import sys # Not used?
 import numpy as np # numerical python
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
