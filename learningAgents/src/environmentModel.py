@@ -112,8 +112,14 @@ class DemandPotentialGame():
         # P = min(P, 125)
         aspire_price= (self.totalDemand+self.costs[0]+self.costs[1])/4
         P= min(P, int(0.95*aspire_price))
+
         return P
 
+    def fight_lb(self, player, firstprice):
+        P=self.fight(player,firstprice)
+        # never price less than production cost
+        P=max(P, self.costs[player])
+        return P
 
     # sophisticated fighting strategy, compare fight()
     # estimate *sales* of opponent as their target, kept between
@@ -200,8 +206,12 @@ class Model(DemandPotentialGame):
             return self.fight(player=1,firstprice=100)
         elif self.adversaryMode== AdversaryModes.fight_125:
             return self.fight(player=1,firstprice=125)
+        elif self.adversaryMode== AdversaryModes.fight_lb_125:
+            return self.fight_lb(player=1,firstprice=125)
         elif self.adversaryMode== AdversaryModes.fight_132:
             return self.fight(player=1,firstprice=132)
+        elif self.adversaryMode== AdversaryModes.fight_lb_132:
+            return self.fight_lb(player=1,firstprice=132)
         elif self.adversaryMode== AdversaryModes.guess_125:
             return self.fight(player=1,firstprice=125)
         elif self.adversaryMode== AdversaryModes.guess_132:
@@ -236,11 +246,16 @@ class AdversaryModes(Enum):
     imitation_132=3
     imitation_128=4
     fight_132=5
-    fight_125=6
-    fight_100=7
-    guess_132=8
-    guess_125=9
+    fight_lb_132=6
+    fight_125=7
+    fight_lb_125=8
+    fight_100=9
+    guess_132=10
+    guess_125=11
     
     
+<<<<<<< Updated upstream
+=======
     
+>>>>>>> Stashed changes
     

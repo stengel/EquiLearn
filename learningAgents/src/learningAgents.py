@@ -53,7 +53,12 @@ class ReinforceAlgorithm():
                 retu = 0
                 while not done:
                     prev_state = state
+<<<<<<< Updated upstream
                     probs = self.policy(prev_state)
+=======
+                    
+                    probs = self.policy(prev_state) #[0.1 0.1 0.15 ...]
+>>>>>>> Stashed changes
                     distAction = Categorical(probs)
                     action = distAction.sample()
 
@@ -79,7 +84,7 @@ class ReinforceAlgorithm():
                 loss.backward()
                 self.optim.step()
 
-                self.returns[iteration][episode] = retu
+                self.returns[iteration][episode] = retu #sum of the our player's rewards  rounds 0-25 
 
                 
             averageRetu= ((self.returns[iteration]).sum())/(self.numberEpisodes)
@@ -96,5 +101,5 @@ class ReinforceAlgorithm():
         """
         Method computes vector of returns for every stage. The returns are the cumulative rewards from that stage.
         """
-        return torch.tensor( [torch.sum( rewards[i:] * (self.gamma ** torch.arange(i, len(episodeMemory))) ) for i in range(len(episodeMemory)) ] )
+        return torch.tensor( [torch.sum( rewards[i:] * (self.gamma ** torch.arange(0, (len(episodeMemory)-i))) ) for i in range(len(episodeMemory)) ] )
 	 
