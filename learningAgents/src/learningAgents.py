@@ -53,12 +53,7 @@ class ReinforceAlgorithm():
                 retu = 0
                 while not done:
                     prev_state = state
-<<<<<<< Updated upstream
                     probs = self.policy(prev_state)
-=======
-                    
-                    probs = self.policy(prev_state) #[0.1 0.1 0.15 ...]
->>>>>>> Stashed changes
                     distAction = Categorical(probs)
                     action = distAction.sample()
 
