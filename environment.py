@@ -1,10 +1,8 @@
-# Katerina Ed and Galit (and Tommy!)
+# Katerina, Ed and Galit (and Tommy!)
+# Relates to the Q-Learning approach.
+# Contains DemandPotentialGame Class and the Model of the DemandPotentialGame Class.
 
 from enum import Enum
-#import torch
-#import torch.nn as nn
-#from torch.distributions import Categorical
-#import sys
 import numpy as np  # numerical python
 
 # printoptions: output limited to 2 digits after decimal point
@@ -64,6 +62,11 @@ class DemandPotentialGame():
         """
         return (self.demandPotential[player][self.stage] + self.costs[player]) / 2
 
+    """
+    The following adversary strategies have been changed from the policy gradient method to remove 
+    the last period effect.
+    """
+
     def myopic(self, player=0):
         """
             Adversary follows Myopic strategy
@@ -74,22 +77,16 @@ class DemandPotentialGame():
         """
             Adversary follows Constant strategy
         """
-        if self.stage == self.T - 1:
-            return monopolyPrice(player, self.stage)
         return price
 
     def imit(self, player, firstprice):  # price imitator strategy
         if self.stage == 0:
             return firstprice
-        if self.stage == self.T - 1:
-            return monopolyPrice(player, self.stage)
         return self.prices[1 - player][self.stage - 1]
 
     def fight(self, player, firstprice):  # simplified fighting strategy
         if self.stage == 0:
             return firstprice
-        if self.stage == self.T - 1:
-            return monopolyPrice(player, self.stage)
         # aspire = [ 207, 193 ] # aspiration level for demand potential
         aspire = [0, 0]
         for i in range(2):
@@ -158,7 +155,7 @@ class Model(DemandPotentialGame):
     """
         Defines the Problem's Model. It is assumed a Markov Decision Process is defined.
         The class is a Child from the Demand Potential Game Class.
-        The reason: Model is a conceptualization of the Game.
+        The reason: Model is a conceptualisation of the Game.
     """
 
     def __init__(self, totalDemand, tupleCosts, totalStages, initState, adversaryMode) -> None:
@@ -170,18 +167,10 @@ class Model(DemandPotentialGame):
         self.done = False
         self.adversaryMode = adversaryMode
 
-    def reset(self):
-        """
-            Reset Model Instantiation.
-        """
-        reward = 0
-        self.stage = 0
-        self.resetGame()
-        return torch.tensor(self.initState, dtype=torch.float32), reward, self.done #???
 
     def adversaryChoosePrice(self):
         """
-            Strategy followed by the adversary.
+            Strategy followed by the adversary. 
         """
 
         if self.adversaryMode == AdversaryModes.constant_132:
@@ -205,20 +194,6 @@ class Model(DemandPotentialGame):
         else:
             return self.myopic(player=1)
 
-    def step(self, state, action):
-        """
-        Transition Function.
-        Parameters:
-        - action: Price
-        - state: tupple in the latest stage (Demand Potential, Price of last time period)
-        """
-        adversaryAction = self.adversaryChoosePrice()
-        self.updatePricesProfitDemand([self.myopic() - action, adversaryAction])
-        newState = [self.demandPotential[1][self.stage + 1], self.prices[1][self.stage]]
-        reward = self.rewardFunction()
-        self.stage = self.stage + 1
-
-        return torch.tensor(newState, dtype=torch.float32), reward, self.stage == self.T - 1 #???
 
 
 class AdversaryModes(Enum):
