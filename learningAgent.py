@@ -64,7 +64,6 @@ class ReinforceAlgorithm():
             advAction=self.chooseAdver(state)
             reward=(state-action)*(action-self.env.costs[0])
             next_state=int(state+.5*(advAction-action))
-            print(state,action,advAction,reward,next_state)
             opt_value_next=max(self.Qtable[self.StateInd(next_state)])
 
             # updating the Qtable
