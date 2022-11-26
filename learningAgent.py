@@ -45,13 +45,13 @@ class ReinforceAlgorithm():
         return (400-st +self.env.costs[1])/2  #myopic
 
     def StateInd(self, state):                 # computes state index in Qtable
-        return state -(200-self.numStates/2)
+        return int(state -(200-self.numStates/2))
 
     def ActionInd(self, monprice, action):      # computes action index in Qtable
-        return action-(monprice-self.numActions+1)
+        return int(action-(monprice-self.numActions+1))
 
     def alpha_n(self, n):                       # defines the Qlearning rate
-        return 1/n
+        return 1/(n+1)
     """
     Now the Q-learning itself 
     """
@@ -63,7 +63,8 @@ class ReinforceAlgorithm():
             action=np.random.randint(monprice-self.numActions+1, monprice+1)
             advAction=self.chooseAdver(state)
             reward=(state-action)*(action-self.env.costs[0])
-            next_state=state+.5*(advAction-action)
+            next_state=int(state+.5*(advAction-action))
+            print(state,action,advAction,reward,next_state)
             opt_value_next=max(self.Qtable[self.StateInd(next_state)])
 
             # updating the Qtable
