@@ -10,28 +10,49 @@ import numpy as np # numerical python
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
 
+class Solver()
+    
+    def __init__(numberEpisodes, Model, discountFactor, numberIterations)
+        self.numberEpisodes = numberEpisodes    
+        self.env = Model
+        self.gamma = discountFactor
+        self.numberIterations = numberIterations
+        self.bestPolicy=None
+     
 
+    def runBestPolicy(self):
+        """
+            Run best policy from the Reinforcement Learning Algorithm. It needs to be used after training.
+        """
 
+        state, reward, done = self.env.reset()
+        returns = 0
+        while not done:
+            prev_state = state
+            probs = self.bestPolicy(prev_state)
+            distAction = Categorical(probs)
+            action = distAction.sample()
 
+            state, reward, done = self.env.step(prev_state, action.item())
+            returns = returns + reward
+        
 
-class ReinforceAlgorithm():
+        return returns
+       
+
+class ReinforceAlgorithm(Solver):
     """
         Model Solver.
     """
     def __init__(self, Model, neuralNet, numberIterations, numberEpisodes, discountFactor) -> None:
-        self.env = Model
+        super().__init__(numberEpisodes, Model, discountFactor, numberIterations)
+
         self.env.adversaryReturns = np.zeros(numberEpisodes)
-        self.returns = np.zeros((numberIterations, numberEpisodes))
-        self.numberEpisodes = numberEpisodes
-        self.episodesMemory = list()
-        self.gamma = discountFactor
-        self.numberIterations = numberIterations
         self.neuralNetwork = neuralNet  
         self.policy = None
         self.optim = None
-        
-        self.bestPolicy=None
         self.bestAverageRetu = 0
+        self.returns = np.zeros((numberIterations, numberEpisodes))   
 
     def resetPolicyNet(self):
         """
@@ -89,12 +110,11 @@ class ReinforceAlgorithm():
             
 
 
-
-
-
     def returnsComputation(self, rewards, episodeMemory):
         """
         Method computes vector of returns for every stage. The returns are the cumulative rewards from that stage.
         """
         return torch.tensor( [torch.sum( rewards[i:] * (self.gamma ** torch.arange(0, (len(episodeMemory)-i))) ) for i in range(len(episodeMemory)) ] )
 	 
+class ActorCriticAlgorithm(Solver):
+    
