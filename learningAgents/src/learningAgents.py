@@ -10,9 +10,9 @@ import numpy as np # numerical python
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
 
-class Solver()
+class Solver():
     
-    def __init__(numberEpisodes, Model, discountFactor, numberIterations)
+    def __init__(self,numberEpisodes, Model, discountFactor, numberIterations):
         self.numberEpisodes = numberEpisodes    
         self.env = Model
         self.gamma = discountFactor
@@ -116,5 +116,5 @@ class ReinforceAlgorithm(Solver):
         """
         return torch.tensor( [torch.sum( rewards[i:] * (self.gamma ** torch.arange(0, (len(episodeMemory)-i))) ) for i in range(len(episodeMemory)) ] )
 	 
-class ActorCriticAlgorithm(Solver):
+#class ActorCriticAlgorithm(Solver):
     

@@ -251,8 +251,5 @@ class AdversaryModes(Enum):
     guess_125=11
     
     
-<<<<<<< Updated upstream
-=======
     
->>>>>>> Stashed changes
     
