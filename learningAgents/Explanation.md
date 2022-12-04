@@ -1,2 +1,2 @@
-# Demand Intertia with Learning Agents
+# Demand Inertia with Learning Agents
 
