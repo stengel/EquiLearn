@@ -2,6 +2,8 @@
 
 ## lrsnash
 
+https://github.com/rahulsavani/bimatrix_solver/blob/master/README.md
+
 see how it works interactively at
 https://cgi.csc.liv.ac.uk/~rahul/bimatrix_solver/
 
