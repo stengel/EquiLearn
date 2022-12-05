@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bimatrix Game Solver</title>
+  <link href='' rel='shortcut icon'>
+  <meta content='width=device-width, initial-scale=1.0' name='viewport'>
+  <link href='https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css' media='screen' rel='stylesheet'>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+  {% assets "css_all" %}
+  <link href='{{ ASSET_URL }}' rel='stylesheet' type='text/css'>
+  {% endassets %}
+</head>
+<body>
+    <div class='content'>
+      <header><h1>Bimatrix Game Solver</h1></header>
+      <div class='row'>
+        <div class='col-md-6'>
+          <form class='form-inline dimensions' onsubmit='return false;'>
+            <h2>number of strategies</h2>
+            <div class='form-group'>
+              <input class='form-control' id='number_m' placeholder='m' required='' type='number' min='0' max='9'>
+            </div>
+            <div class='form-group'>
+              <input class='form-control' id='number_n' placeholder='n' required='' type='number' min='0' max='9'>
+            </div>
+            <button class='btn btn-default' type='submit'>Set</button>
+          </form>
+          <form id='bimatrix-form' onsubmit='return false;'>
+            <h2>Payoff Matrix</h2>
+            <div class='payoff-matrix-buttons'>
+              <button class='btn btn-default random' type='button'>Random Payoffs</button>
+              <button type='button' class='btn btn-default clear'>Clear</button>
+            </div>
+            <table id='bimatrix-table'></table>
+            <input name='hidden_m' type='hidden'>
+            <input name='hidden_n' type='hidden'>
+            <div class='submit-button'>
+              <button class='btn btn-warning run-algo' type='submit'>GO</button>
+            </div>
+          </form>
+        </div>
+        <div class='col-md-6'>
+          <div class='results'>
+            <h2>Results</h2>
+            <h2>Extreme Equilibria</h2>
+            <table class='table table-bordered' id='eq-table'>
+              <thead>
+                <tr class='first'>
+                  <th rowspan="2">#</th><th colspan="3">Player 1 Strategy</th>
+                  <th colspan="3">Player 2 Strategy</th>
+                </tr>
+                <tr><th>#</th><th>Distribution</th><th>Payoff</th><th>#</th><th>Distribution</th><th>Payoff</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <h2>Equilibrium Components</h2>
+            <table class='table table-bordered' id='comp-table'>
+              <thead>
+                <tr class='first'>
+                <th rowspan="2">#</th><th colspan="3">Nash Subsets</th><th colspan="2">Extreme Equilibria</th><th rowspan="2">Index</th>
+                </tr>
+                <tr class="second-row">
+                  <th>Player 1</th><th></th><th class='with-border'>Player 2</th><th>Number</th><th>Lex-index</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <footer>
+        <span>
+          This solver uses <strong>lrs</strong> and <strong>clique</strong>. An implementation by D. Avis and B. von Stengel of a lexico-graphic reverse search and clique enumeration algorithms. For more information visit <a href="http://cgm.cs.mcgill.ca/~avis/C/lrs.html">here</a> and <a href="http://www.maths.lse.ac.uk/personal/stengel/">here</a>.
+        </span>
+      </footer>
+    </div>
+  </div>
+  <div class="modal">
+    <div class="spinner">
+      <div class="rect1"></div>
+      <div class="rect2"></div>
+      <div class="rect3"></div>
+      <div class="rect4"></div>
+      <div class="rect5"></div>
+    </div>
+  </div>
+    {% assets "js_all" %}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+    {% endassets %}
+  </body>
+</html>
