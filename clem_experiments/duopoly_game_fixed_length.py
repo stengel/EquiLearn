@@ -108,12 +108,12 @@ p2_list = [
     Fight(71, 200, 130, 193)
 ]
 
-A,B = tournament_fixed_length(p1_list, p2_list, 5)
+A,B = tournament_fixed_length(p1_list, p2_list)
 
 print(A)
 
 
-T=5 # number of rounds
+T=25 # number of rounds
 # player 0 = low cost
 # player 1 = high cost
 cost = [57, 71] # cost
