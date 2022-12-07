@@ -7,6 +7,8 @@ import torch.nn as nn
 from torch.distributions import Categorical
 import sys
 import numpy as np # numerical python
+import pandas as pd
+from matplotlib import pyplot as plt
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
 
@@ -69,6 +71,8 @@ class ReinforceAlgorithm(Solver):
             self.resetPolicyNet()
 
             for episode in range(self.numberEpisodes):
+                if episode % 10000 == 0:
+                    print (episode)
                 episodeMemory = list()
                 state, reward, done = self.env.reset()
                 retu = 0
@@ -108,6 +112,8 @@ class ReinforceAlgorithm(Solver):
                 self.bestPolicy=self.policy
                 self.bestAverageRetu=averageRetu
             
+            plt.plot(self.returns[iteration])
+            plt.show()
 
 
     def returnsComputation(self, rewards, episodeMemory):
