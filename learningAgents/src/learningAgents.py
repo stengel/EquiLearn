@@ -71,7 +71,7 @@ class ReinforceAlgorithm(Solver):
             self.resetPolicyNet()
 
             for episode in range(self.numberEpisodes):
-                if episode % 10000 == 0:
+                if episode % 50000 == 0:
                     print (episode)
                 episodeMemory = list()
                 state, reward, done = self.env.reset()
