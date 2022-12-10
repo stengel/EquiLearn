@@ -54,6 +54,7 @@ class ReinforceAlgorithm(Solver):
         self.policy = None
         self.optim = None
         self.bestAverageRetu = 0
+        self.avg_end_action = [0]*25 # Average actions taken in each stage for the last one percent of episodes. Currently for the last iteration. 
         self.returns = np.zeros((numberIterations, numberEpisodes))   
 
     def resetPolicyNet(self):
@@ -66,14 +67,15 @@ class ReinforceAlgorithm(Solver):
         """
             Method that performs Monte Carlo Policy Gradient algorithm. 
         """
-
+        avg_over = 0 # counter for the number of episodes in the certain percentage at the end
+        
         for iteration in range(self.numberIterations):
-            self.resetPolicyNet()
+            self.resetPolicyNet() # Reset the neural network
 
             for episode in range(self.numberEpisodes):
-                if episode % 50000 == 0:
+                if episode % 50000 == 0: # In order to see how the program is progressing
                     print (episode)
-                episodeMemory = list()
+                episodeMemory = list() 
                 state, reward, done = self.env.reset()
                 retu = 0
                 while not done:
@@ -85,12 +87,23 @@ class ReinforceAlgorithm(Solver):
                     state, reward, done = self.env.step(prev_state, action.item())
                     retu = retu + reward
                     episodeMemory.append((prev_state, action, reward))
-
+                # Append the last state, action and reward
+                probs = self.policy(state)
+                distAction = Categorical(probs)
+                action = distAction.sample()
+                reward = self.env.finalReward(state, action.item())
+                retu = retu + reward
+                episodeMemory.append((state, action, reward))
+                
 
                 states = torch.stack([item[0] for item in episodeMemory])    
                 actions = torch.tensor([item[1] for item in episodeMemory]) 
                 rewards = torch.tensor([item[2] for item in episodeMemory])
-
+                
+                if episode >= 0.99 * self.numberEpisodes: # To return some of what the agent has learnt
+                    for i in range(len(self.avg_end_action)):
+                        self.avg_end_action[i] = self.avg_end_action[i] + actions[i]
+                    avg_over += 1
 
                 action_probs = self.policy(states) # batch (10, 15)
                 action_dists = Categorical(action_probs) 
@@ -106,14 +119,16 @@ class ReinforceAlgorithm(Solver):
 
                 self.returns[iteration][episode] = retu #sum of the our player's rewards  rounds 0-25 
 
-                
+            for i in range(len(self.avg_end_action)):
+                self.avg_end_action[i] = self.avg_end_action[i] / avg_over
+            
             averageRetu= ((self.returns[iteration]).sum())/(self.numberEpisodes)
             if (self.bestPolicy is None) or (averageRetu > self.bestAverageRetu):
                 self.bestPolicy=self.policy
                 self.bestAverageRetu=averageRetu
             
-            plt.plot(self.returns[iteration])
-            plt.show()
+            #plt.plot(self.returns[iteration])
+            #plt.show()
 
 
     def returnsComputation(self, rewards, episodeMemory):

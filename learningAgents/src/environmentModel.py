@@ -76,15 +76,11 @@ class DemandPotentialGame():
         """
             Adversary follows Constant strategy
         """    
-        if self.stage == self.T-1:
-            return monopolyPrice(player, self.stage)
         return price
 
     def imit(self, player, firstprice): # price imitator strategy
         if self.stage == 0:
             return firstprice
-        if self.stage == self.T-1:
-            return monopolyPrice(player, self.stage)
         return self.prices[1-player][self.stage-1] 
 
     def fight(self, player, firstprice): # simplified fighting strategy
@@ -105,7 +101,7 @@ class DemandPotentialGame():
         # opponent price; own price has to be reduced by twice
         # the negative amount D - Asp to getself.demandPotential to Asp 
         P = self.prices[1-player][self.stage-1] + 2*(D - Asp) 
-        # never price to high because even 125 gives good profits
+        # never price too high because even 125 gives good profits
         # P = min(P, 125)
         aspire_price= (self.totalDemand+self.costs[0]+self.costs[1])/4
         P= min(P, int(0.95*aspire_price))
@@ -235,6 +231,13 @@ class Model(DemandPotentialGame):
 
         
         return torch.tensor(newState, dtype=torch.float32), reward, self.stage == self.T-1
+    
+    def finalReward(self, state, action):
+        adversaryAction = self.adversaryChoosePrice()
+        self.updatePricesProfitDemand( [self.myopic() - action, adversaryAction] )
+        reward = self.rewardFunction()
+        return reward
+
 
 class AdversaryModes(Enum):
     myopic=0
