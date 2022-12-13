@@ -7,10 +7,13 @@ import torch.nn as nn
 from torch.distributions import Categorical
 import sys
 import numpy as np # numerical python
+import pandas as pd
+from matplotlib import pyplot as plt
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
 
 class Solver():
+<<<<<<< Updated upstream
     
     def __init__(self,numberEpisodes, Model, discountFactor, numberIterations):
         self.numberEpisodes = numberEpisodes    
@@ -40,6 +43,39 @@ class Solver():
         return returns
        
 
+=======
+
+    
+    def __init__(self,numberEpisodes, Model, discountFactor, numberIterations):
+        self.numberEpisodes = numberEpisodes    
+        self.env = Model
+        self.gamma = discountFactor
+        self.numberIterations = numberIterations
+        self.bestPolicy=None
+        
+     
+
+    def runBestPolicy(self):
+        """
+            Run best policy from the Reinforcement Learning Algorithm. It needs to be used after training.
+        """
+
+        state, reward, done = self.env.reset()
+        returns = 0
+        while not done:
+            prev_state = state
+            probs = self.bestPolicy(prev_state)
+            distAction = Categorical(probs)
+            action = distAction.sample()
+
+            state, reward, done = self.env.step(prev_state, action.item())
+            returns = returns + reward
+        
+
+        return returns
+    
+
+>>>>>>> Stashed changes
 class ReinforceAlgorithm(Solver):
     """
         Model Solver.
@@ -53,12 +89,19 @@ class ReinforceAlgorithm(Solver):
         self.optim = None
         self.bestAverageRetu = 0
         self.returns = np.zeros((numberIterations, numberEpisodes))   
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 
     def resetPolicyNet(self):
         """
             Reset Policy Neural Network.
         """
-        self.policy, self.optim = self.neuralNetwork()
+        self.policy, self.optim = self.neuralNetwork.reset()
+
+    def savePolicy(self):
+         pass
 
     def  solver(self):
         """
@@ -69,6 +112,8 @@ class ReinforceAlgorithm(Solver):
             self.resetPolicyNet()
 
             for episode in range(self.numberEpisodes):
+                if episode % 50000 == 0:
+                    print (episode)
                 episodeMemory = list()
                 state, reward, done = self.env.reset()
                 retu = 0
@@ -108,6 +153,11 @@ class ReinforceAlgorithm(Solver):
                 self.bestPolicy=self.policy
                 self.bestAverageRetu=averageRetu
             
+<<<<<<< Updated upstream
+=======
+            plt.plot(self.returns[iteration])
+            plt.show()
+>>>>>>> Stashed changes
 
 
     def returnsComputation(self, rewards, episodeMemory):

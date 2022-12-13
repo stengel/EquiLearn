@@ -27,11 +27,12 @@ class DemandPotentialGame():
         self.stage = None
 
 
+
     def resetGame(self):
         """
         Method resets game memory: Demand Potential, prices, profits
         """
-        self.demandPotential = [[0]*self.T,[0]*self.T] # two lists for the two players
+        self.demandPotential = [[0]*(self.T),[0]*(self.T)] # two lists for the two players
         self.prices = [[0]*self.T,[0]*self.T]  # prices over T rounds
         self.profit = [[0]*self.T,[0]*self.T]  # profit in each of T rounds
         self.demandPotential[0][0] = self.totalDemand/2 # initialize first round 0
@@ -77,21 +78,25 @@ class DemandPotentialGame():
             Adversary follows Constant strategy
         """    
         if self.stage == self.T-1:
+<<<<<<< Updated upstream
             return monopolyPrice(player, self.stage)
+=======
+            return self.monopolyPrice(player, self.stage)
+>>>>>>> Stashed changes
         return price
 
     def imit(self, player, firstprice): # price imitator strategy
         if self.stage == 0:
             return firstprice
         if self.stage == self.T-1:
-            return monopolyPrice(player, self.stage)
+            return self.monopolyPrice(player, self.stage)
         return self.prices[1-player][self.stage-1] 
 
     def fight(self, player, firstprice): # simplified fighting strategy
         if self.stage == 0:
             return firstprice
         if self.stage == self.T-1:
-            return monopolyPrice(player, self.stage)
+            return self.monopolyPrice(player, self.stage)
         #aspire = [ 207, 193 ] # aspiration level for demand potential
         aspire=[0,0]
         for i in range(2):
@@ -125,18 +130,18 @@ class DemandPotentialGame():
     oppsaleguess = [61, 75] # first guess opponent sales as in monopoly
     def guess(self, player, firstprice): # predictive fighting strategy
         if self.stage == 0:
-            oppsaleguess[0] = 61 # always same start 
-            oppsaleguess[1] = 75 # always same start 
+            self.oppsaleguess[0] = 61 # always same start 
+            self.oppsaleguess[1] = 75 # always same start 
             return firstprice
 
         if self.stage == self.T-1:
-            return monopolyPrice(player, self.stage)
+            return self.monopolyPrice(player, self.stage)
         aspire = [ 207, 193 ] # aspiration level
         D =self.demandPotential[player][self.stage] 
         Asp = aspire [player]
 
         if D >= Asp: # keep price, but go slightly towards monopoly if good
-            pmono = monopolyPrice(player, self.stage)
+            pmono = self.monopolyPrice(player, self.stage)
             pcurrent = self.prices[player][self.stage-1] 
             if pcurrent > pmono: # shouldn't happen
                 return pmono
@@ -149,9 +154,9 @@ class DemandPotentialGame():
         prevsales =self.demandPotential[1-player][t-1] - self.prices[1-player][t-1] 
         # adjust with weight alpha from previous guess
         alpha = .5
-        newsalesguess = alpha * oppsaleguess[player] + (1-alpha)*prevsales
+        newsalesguess = alpha * self.oppsaleguess[player] + (1-alpha)*prevsales
         # update
-        oppsaleguess[player] = newsalesguess 
+        self.oppsaleguess[player] = newsalesguess 
         guessoppPrice = 400 - D - newsalesguess 
         P = guessoppPrice + 2*(D - Asp) 
         
@@ -167,15 +172,15 @@ class Model(DemandPotentialGame):
         Defines the Problem's Model. It is assumed a Markov Decision Process is defined. The class is a Child from the Demand Potential Game Class.
         The reason: Model is a conceptualization of the Game.
     """
-    def __init__(self, totalDemand,tupleCosts,totalStages, initState,adversaryMode) -> None:
+    def __init__(self, totalDemand,tupleCosts,totalStages, initState,adversaryProbs) -> None:
         super().__init__( totalDemand,tupleCosts,totalStages)
 
         self.rewardFunction = self.profits
         self.initState = initState
         self.episodesMemory = list()
         self.done = False
-        self.adversaryMode=adversaryMode
-
+        self.adversaryProbs=adversaryProbs
+        
     def reset(self):
         """
             Reset Model Instantiation. 
@@ -183,8 +188,13 @@ class Model(DemandPotentialGame):
         reward = 0
         self.stage = 0
         self.resetGame()
+        self.resetAdversary()
         return torch.tensor(self.initState, dtype=torch.float32), reward, self.done
 
+    def resetAdversary(self):
+        adversaryDist= Categorical(self.adversaryProbs)
+        adversaryInd = (adversaryDist.sample()).item()
+        self.adversaryMode=AdversaryModes(adversaryInd)
 
     def adversaryChoosePrice(self): 
         """
@@ -228,13 +238,19 @@ class Model(DemandPotentialGame):
         - state: tupple in the latest stage (Demand Potential, Price)
         """
         adversaryAction = self.adversaryChoosePrice()
-        self.updatePricesProfitDemand( [self.myopic() - action, adversaryAction] )          
-        newState = [ self.demandPotential[1][self.stage + 1], self.prices[1][self.stage] ]
+        self.updatePricesProfitDemand( [self.myopic() - action, adversaryAction] )     
+
+        done= (self.stage == self.T-1)
+        if not done:
+            newState = [ self.demandPotential[1][self.stage + 1], self.prices[1][self.stage] ] 
+        else:
+            newState=[ 0, self.prices[1][self.stage] ] 
+        
         reward = self.rewardFunction()
         self.stage = self.stage + 1
 
         
-        return torch.tensor(newState, dtype=torch.float32), reward, self.stage == self.T-1
+        return torch.tensor(newState, dtype=torch.float32), reward, done
 
 class AdversaryModes(Enum):
     myopic=0
