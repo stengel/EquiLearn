@@ -1,85 +1,55 @@
 import random #TODO use seed
 import numpy as np
 np.set_printoptions(precision=2, suppress=False)
-from players import *
+from agent import *
 
-def single_round(p1, p2):
-    p1_price_t = p1.price[-1]
-    p2_price_t = p2.price[-1]
+#TODO: create base game class in a way that abstracts all info from specific games. 
+#       > probably would invovle creating "environment", "observation", and "action" types
 
-    p1_d_t = p1.d[-1]
-    p2_d_t = p2.d[-1]
+class DuopolyGame(): #TODO: inheret from base game class
+    def __init__(self, T):
+        self.T = T
+        self.costs = [57, 71]
+        self.reset()
 
-    p1.d.append(p1_d_t + 0.5*(p2.price[-1] - p1.price[-1]))
-    p2.d.append(p2_d_t + 0.5*(p1.price[-1] - p2.price[-1]))
+    def reset(self):
+        self.prices = [[],[]]
+        self.profits = [[],[]]
+        self.ds = [[200], [200]]
 
-    p1_price_chosen = p1.choose_price(p2_price_t)
-    p2_price_chosen = p2.choose_price(p1_price_t)
+    def single_round(self, p1, p2, t):
+        next_price = [0,0]
+        next_price[0] = p1.choose_price(self.ds[0][-1], self.costs[0], t)
+        next_price[1] = p2.choose_price(self.ds[1][-1], self.costs[1], t)
+        for player in [0,1]:
+            self.prices[player].append(next_price[player])
+            self.profits[player].append((self.ds[player][-1] - self.prices[player][-1]) * (self.prices[player][-1] - self.costs[player]))
+        
+        self.ds[0].append((self.ds[0][-1] + 0.5*(self.prices[1][-1] - self.prices[0][-1])))
+        self.ds[1].append((self.ds[1][-1] + 0.5*(self.prices[0][-1] - self.prices[1][-1])))
 
-    p1.price.append(p1_price_chosen)
-    p2.price.append(p2_price_chosen)
+    def run(self, p1, p2):
+        p1.reset()
+        p2.reset()
+        self.reset()
+        for t in range(self.T-1):
+            self.single_round(p1,p2,t)
 
-    p1_profit = (p1.d[-1] - p1.price[-1])*(p1.price[-1] - p1.cost)
-    p2_profit = (p2.d[-1] - p2.price[-1])*(p2.price[-1] - p2.cost)
-    return p1_profit, p2_profit
+        #HACK END EFFECT TEST:
+        for player in [0,1]:
+            self.prices[player].append((self.costs[player] + self.ds[player][-1])*0.5)
+            self.profits[player].append((self.ds[player][-1] - self.prices[player][-1]) * (self.prices[player][-1] - self.costs[player]))
+        #END HACK
 
-def run_game_w_cont_prob(p1, p2, cont_prob = 0.96): #w/ continuation probability
-    T = 0
-    p1.start()
-    p2.start()
-    p1_profits = [(p1.start_d - p1.start_price)*(p1.start_price - p1.cost)]
-    p2_profits = [(p2.start_d - p2.start_price)*(p2.start_price - p2.cost)]
-    while cont_prob > random.random(): #TODO: use seed
-        p1_profit, p2_profit = single_round(p1, p2)
-        p1_profits.append(p1_profit)
-        p2_profits.append(p2_profit)
-        T += 1
-    return p1_profits, p2_profits, T
-
-def run_game_fixed_length(p1, p2, T = 25):
-    p1.start()
-    p2.start()
-    p1_profits = [(p1.start_d - p1.start_price)*(p1.start_price - p1.cost)]
-    p2_profits = [(p2.start_d - p2.start_price)*(p2.start_price - p2.cost)]
-    for _ in range(T-2):
-        p1_profit, p2_profit = single_round(p1, p2)
-        p1_profits.append(p1_profit)
-        p2_profits.append(p2_profit)
-
-    #HACK END EFFECT TEST:
-    p1_price_t = p1.price[-1]
-    p2_price_t = p2.price[-1]
-
-    p1_d_t = p1.d[-1]
-    p2_d_t = p2.d[-1]
-
-    p1.d.append(p1_d_t + 0.5*(p2_price_t - p1_price_t))
-    p2.d.append(p2_d_t + 0.5*(p1_price_t - p2_price_t))
-
-    p1_price_chosen = p1.monopoly_price()
-    p2_price_chosen = p2.monopoly_price()
-
-    p1.price.append(p1_price_chosen)
-    p2.price.append(p2_price_chosen)
-
-    p1_profits.append((p1.d[-1] - p1.price[-1])*(p1.price[-1] - p1.cost))
-    p2_profits.append((p2.d[-1] - p2.price[-1])*(p2.price[-1] - p2.cost))
-    #END HACK
-
-    return p1_profits, p2_profits
-
-def tournament_w_cont_prob(p1_list, p2_list, cont_prob = 0.96):
-    for p1 in p1_list:
-        for p2 in p2_list:
-            p1_profits, p2_profits, T = run_game_w_cont_prob(p1, p2, cont_prob)
-            #TODO: do this properly in a new file
+        return self.profits[0], self.profits[1]
 
 def tournament_fixed_length(p1_list, p2_list, T = 25):
+    game = DuopolyGame(T)
     A = np.zeros((len(p1_list), len(p2_list)))
     B = np.zeros((len(p1_list), len(p2_list)))
     for i, p1 in enumerate(p1_list):
         for j, p2 in enumerate(p2_list):
-            p1_profits, p2_profits = run_game_fixed_length(p1, p2, T)
+            p1_profits, p2_profits = game.run(p1, p2)
             A[i][j] = sum(p1_profits) / T
             B[i][j] = sum(p2_profits) / T
     return A, B
@@ -87,33 +57,33 @@ def tournament_fixed_length(p1_list, p2_list, T = 25):
 
 #TESTING Equivalence with Bernhard's play.py
 p1_list = [
-    Myopic(57, 200),
-    Guess(57, 200, 125, 207, 61, 125),
-    Const(57, 200, 125),
-    Const(57, 200, 117),
-    Const(57, 200, 114.2),
-    Const(57, 200, 105),
-    Const(57, 200, 100),
-    Const(57, 200, 95),
-    Imit(57, 200, 120),
-    Imit(57, 200, 110),
-    Fight(52, 200, 125, 207)
+    Myopic(),
+    Guess(125, 207, 61, 125),
+    Const(125),
+    Const(117),
+    Const(114.2),
+    Const(105),
+    Const(100),
+    Const(95),
+    Imit(120),
+    Imit(110),
+    Fight(125, 207)
 ]
 
 p2_list = [
-    Myopic(71, 200),
-    Guess(71, 200, 130, 193, 75, 130),
-    Imit(71, 200, 131),
-    Imit(71, 200, 114.2),
-    Fight(71, 200, 130, 193)
+    Myopic(),
+    Guess(130, 193, 75, 130),
+    Imit(131),
+    Imit(114.2),
+    Fight(130, 193)
 ]
 
-A,B = tournament_fixed_length(p1_list, p2_list)
+A,B = tournament_fixed_length(p1_list, p2_list, 5)
 
 print(A)
 
 
-T=25 # number of rounds
+T=5 # number of rounds
 # player 0 = low cost
 # player 1 = high cost
 cost = [57, 71] # cost
@@ -206,7 +176,7 @@ def fight(player, firstprice, t): # simplified fighting strategy
     # never price to high because even 125 gives good profits
     P = min(P, 125)
     return P
-
+
 # sophisticated fighting strategy, compare fight()
 # estimate *sales* of opponent as their target, kept between
 # calls in global variable oppsaleguess[]. Assumed behavior
