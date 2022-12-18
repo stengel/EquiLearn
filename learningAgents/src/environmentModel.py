@@ -5,7 +5,6 @@ from enum import Enum
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
-import sys # Not used?
 import numpy as np # numerical python
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
@@ -35,7 +34,7 @@ class DemandPotentialGame():
         self.demandPotential = [[0]*(self.T),[0]*(self.T)] # two lists for the two players
         self.prices = [[0]*self.T,[0]*self.T]  # prices over T rounds
         self.profit = [[0]*self.T,[0]*self.T]  # profit in each of T rounds
-        self.demandPotential[0][0] = self.totalDemand/2 # initialize first round 0
+        self.demandPotential[0][0] = self.totalDemand/2 # initialise first round 0
         self.demandPotential[1][0] = self.totalDemand/2
 
 
@@ -77,12 +76,6 @@ class DemandPotentialGame():
         """
             Adversary follows Constant strategy
         """    
-        if self.stage == self.T-1:
-<<<<<<< Updated upstream
-            return monopolyPrice(player, self.stage)
-=======
-            return self.monopolyPrice(player, self.stage)
->>>>>>> Stashed changes
         return price
 
     def imit(self, player, firstprice): # price imitator strategy
@@ -251,6 +244,13 @@ class Model(DemandPotentialGame):
 
         
         return torch.tensor(newState, dtype=torch.float32), reward, done
+    
+    
+    def finalStep(self, state, action):
+        adversaryAction = self.adversaryChoosePrice()
+        self.updatePricesProfitDemand( [self.myopic() - action, adversaryAction] )
+        reward = self.rewardFunction()
+        return reward
 
 class AdversaryModes(Enum):
     myopic=0
