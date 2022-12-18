@@ -98,12 +98,6 @@ class ReinforceAlgorithm(Solver):
                     retu = retu + reward
                     episodeMemory.append((prev_state, action, reward))
 		
-		probs = self.policy(state)
-                distAction = Categorical(probs)
-                action = distAction.sample()
-                reward = self.env.finalReward(state, action.item())
-                retu = retu + reward
-                episodeMemory.append((state, action, reward))
 		
                 states = torch.stack([item[0] for item in episodeMemory])    
                 actions = torch.tensor([item[1] for item in episodeMemory]) 
