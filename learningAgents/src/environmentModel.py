@@ -246,7 +246,7 @@ class Model(DemandPotentialGame):
         return torch.tensor(newState, dtype=torch.float32), reward, done
     
     
-    def finalStep(self, state, action):
+    def finalReward(self, state, action):
         adversaryAction = self.adversaryChoosePrice()
         self.updatePricesProfitDemand( [self.myopic() - action, adversaryAction] )
         reward = self.rewardFunction()
