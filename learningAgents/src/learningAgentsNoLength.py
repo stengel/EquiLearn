@@ -1,7 +1,6 @@
 # Francisco, Sahar, Edward
 # ReinforceAlgorithm Class: Solver.
 
-import numpy as np #repeated
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
@@ -38,7 +37,7 @@ class ReinforceAlgorithm(Solver):
         """
             Reset Policy Neural Network.
         """
-        self.policy, self.optim = self.neuralNetwork()
+        self.policy = self.neuralNetwork()
 
     def  solver(self):
         """
@@ -75,8 +74,6 @@ class ReinforceAlgorithm(Solver):
                 states = torch.stack([item[0] for item in episodeMemory])    
                 actions = torch.tensor([item[1] for item in episodeMemory]) 
                 rewards = torch.tensor([item[2] for item in episodeMemory])
-                # for i in range(len(rewards)):
-                #    rewards[i] = rewards[i] / len(rewards)
                     
                 action_probs = self.policy(states) # batch (10, 15)
                 action_dists = Categorical(action_probs) 
