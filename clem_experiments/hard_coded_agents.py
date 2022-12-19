@@ -3,27 +3,26 @@ from agent import Agent
 #basic hard coded strategies, from Bernhard's play.py
 class Myopic(Agent):
     name = "Myopic"
-    def __init__(self):
-        pass
+    def __init__(self, parameters):
+        super().__init__(parameters)
 
     def choose_price(self, d, cost, t):
         return (d+cost)*0.5
 
 class Const(Agent):
-    def __init__(self, c):
-        self.c = c #constant price
+    def __init__(self, parameters):
+        super().__init__(parameters)
 
     def choose_price(self, d, cost, t):
-        return self.c
+        return self.parameters["c"]
 
 class Imit(Agent):
-    def __init__(self, start_price):
-        self.start_price = start_price
-
+    def __init__(self, parameters):
+        super().__init__(parameters)
         self.reset()
 
     def reset(self):
-        self.prev_price = self.start_price
+        self.prev_price = self.parameters["start_price"]
         self.prev_d = 200
 
     def choose_price(self, d, cost, t):
@@ -34,36 +33,32 @@ class Imit(Agent):
 
 #Best hard-coded strategy found
 class Guess(Agent):
-    def __init__(self, start_price, aspiration_level, op_sale_guess, max_price, alpha = 0.5):
-        self.start_price = start_price
-        self.aspiration_level = aspiration_level
-        self.init_op_sale_guess = op_sale_guess
-        self.max_price = max_price
-        self.alpha = alpha
-
+    def __init__(self, parameters): #start_price, aspiration_level, init_op_sales_guess, max_price, step_size, alpha
+        super().__init__(parameters)
         self.reset()
 
     def reset(self):
-        self.op_sale_guess = self.init_op_sale_guess
-        self.prev_price = self.start_price
+        self.op_sales_guess = self.parameters["init_op_sales_guess"]
+        self.prev_price = self.parameters["start_price"]
         self.prev_d = 200
 
     def choose_price(self, d, cost, t):
         if t == 0:
-            return self.start_price
+            return self.parameters["start_price"]
 
         next_price = 0 #placeholder
-        if d >= self.aspiration_level:
-            if self.prev_price > (d+cost)*0.5 - 7:
+        if d >= self.parameters["aspiration_level"]:
+            if self.prev_price > (d+cost)*0.5 - self.parameters["step_size"]:
                 next_price = self.prev_price
             else:
-                next_price = 0.6 * self.prev_price + 0.4 * ((d+cost)*0.5 - 7)
+                next_price = 0.6 * self.prev_price + 0.4 * ((d+cost)*0.5 - self.parameters["step_size"])
         else:
             prev_op_d = 400 - d
             prev_op_price = self.prev_price + (d - self.prev_d)  #infer previous opponent price
-            self.op_sale_guess = self.alpha * self.op_sale_guess + (1 - self.alpha) * (prev_op_d - prev_op_price)
-            op_price_guess = prev_op_d - self.op_sale_guess
-            next_price = min(op_price_guess + 2*(d - self.aspiration_level), self.max_price)
+            self.op_sales_guess = self.parameters["alpha"] * self.op_sales_guess \
+                + (1 - self.parameters["alpha"]) * (prev_op_d - prev_op_price)
+            op_price_guess = prev_op_d - self.op_sales_guess
+            next_price = min(op_price_guess + 2*(d - self.parameters["aspiration_level"]), self.parameters["max_price"])
 
         self.prev_price = next_price
         self.prev_d = d

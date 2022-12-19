@@ -109,23 +109,37 @@ def tournament_stochastic(p1_list, p2_list, cont_prob = 0.96, tries = 5):
 #TESTING
 if __name__ == "__main__":
     p1_list = [
-        Myopic(),
-        Guess(125, 207, 61, 125),
-        Const(125),
-        Const(117),
-        Const(114.2),
-        Const(105),
-        Const(100),
-        Const(95),
-        Imit(120),
-        Imit(110)
+        Myopic({}),
+        Guess({
+            "start_price": 125, 
+            "aspiration_level": 207, 
+            "init_op_sales_guess": 61, 
+            "max_price": 125, 
+            "step_size": 7, 
+            "alpha": 0.5
+        }),
+        Const({"c": 125}),
+        Const({"c": 117}),
+        Const({"c": 114.2}),
+        Const({"c": 105}),
+        Const({"c": 100}),
+        Const({"c": 95}),
+        Imit({"start_price": 120}),
+        Imit({"start_price": 110})
     ]
 
     p2_list = [
-        Myopic(),
-        Guess(130, 193, 75, 130),
-        Imit(131),
-        Imit(114.2)
+        Myopic({}),
+        Guess({
+            "start_price": 130, 
+            "aspiration_level": 193, 
+            "init_op_sales_guess": 75, 
+            "max_price": 130, 
+            "step_size": 7, 
+            "alpha": 0.5
+        }),
+        Imit({"start_price": 131}),
+        Imit({"start_price": 114.2})
     ]
 
     A1, B1 = tournament_fixed_length(p1_list, p2_list, 25)

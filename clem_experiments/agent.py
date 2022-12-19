@@ -3,8 +3,8 @@
 
 class Agent:
     name = ""
-    def __init__(self):
-        pass
+    def __init__(self, parameters): #TODO parameter class
+        self.parameters = parameters
 
     def reset(self):
         pass
@@ -23,11 +23,28 @@ class MixedStrategy(Agent):
         pass #TODO
 
     def choose_price(self, d, cost, t):
-        return self.current_strategy.choose_price(d, cost)
+        return self.current_strategy.choose_price(d, cost, t)
 
 class LearningAgent(Agent):
     pass #TODO
 
 class FiniteDifferenceAgent(LearningAgent):
-    def __init__(self, agent, learnable_parameters):
-        pass
+    def __init__(self, agent, learnable_parameters, learning_rate):
+        self.agent = agent
+        self.learnable_parameters = learnable_parameters
+        self.learning_rate = learning_rate
+        
+        self.gradients = dict.fromkeys(learnable_parameters, 0)
+    
+    def reset(self):
+        self.agent.reset()
+
+    def choose_price(self, d, cost, t):
+        return self.agent.choose_price(d, cost, t)
+
+    def increment_parameter(self, parameter, increment):
+        self.agent.parameters[parameter] += increment
+
+    def step(self):
+        for parameter in self.learnable_parameters:
+            self.increment_parameter(parameter, self.gradients[parameter] * self.learning_rate)
