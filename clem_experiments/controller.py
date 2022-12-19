@@ -26,7 +26,6 @@ def train_high_cost(learning_agent, opponent, epsilon = 1e-5):
             _, profit_delta, = game.run(opponent, learning_agent)
             learning_agent.gradients[parameter] = (profit_delta - profit) / epsilon
             learning_agent.increment_parameter(parameter, -epsilon)
-            #print(parameter, learning_agent.agent.parameters[parameter], profit, profit_delta, (profit_delta - profit) / epsilon)
         learning_agent.reset()
         learning_agent.step()
 

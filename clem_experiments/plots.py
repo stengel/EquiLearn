@@ -1,8 +1,20 @@
+# PLOTS PROFIT LANDSCAPE FOR GUESS
+# HELPS FOR VISUALISING OPTIMISATION
+# MAKES CLEAR WHY FINITE DIFFERENCES FAILS TO CONVERGE
+
 from duopoly_game import DuopolyGame
 from hard_coded_agents import Guess
 
 import numpy as np
 import matplotlib.pyplot as plt
+
+PARAMETER_1 = "step_size"
+P1_MIN = 3
+P1_MAX = 8
+
+PARAMETER_2 = "alpha"
+P2_MIN = 0
+P2_MAX = 1
 
 low_cost = Guess({
     "start_price": 125,
@@ -10,7 +22,7 @@ low_cost = Guess({
     "init_op_sales_guess": 61,
     "max_price": 125,
     "step_size": 7,
-    "alpha": 0.5
+    "alpha": 0.7
 })
 
 high_cost = Guess({
@@ -24,15 +36,22 @@ high_cost = Guess({
 
 game = DuopolyGame(25)
 
-l = 120
-s = []
-p = []
-high_cost.agent.parameters["start_price"] = l
-for i in range(2000):
-    s.append(l + i/100)
-    high_cost.agent.parameters["start_price"] += 0.01
-    _, profit = game.run(low_cost, high_cost)
-    p.append(profit)
+def match(x, y):
+    low_cost.parameters[PARAMETER_1] = x
+    low_cost.parameters[PARAMETER_2] = y
+    profit, _ = game.run(low_cost, high_cost)
+    return profit
 
-plt.plot(s, p)
+f = np.vectorize(match)
+
+x = np.linspace(P1_MIN, P1_MAX, 50)
+y = np.linspace(P2_MIN, P2_MAX, 50)
+
+X, Y = np.meshgrid(x, y)
+Z = f(X, Y)
+fig = plt.figure()
+ax = plt.axes(projection='3d')
+ax.plot_surface(X, Y, Z, rstride=1, cstride=1,
+                cmap='viridis', edgecolor='none')
+
 plt.show()
