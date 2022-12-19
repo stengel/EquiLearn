@@ -5,6 +5,7 @@ from enum import Enum
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
+import sys # Not used?
 import numpy as np # numerical python
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
@@ -34,7 +35,7 @@ class DemandPotentialGame():
         self.demandPotential = [[0]*(self.T),[0]*(self.T)] # two lists for the two players
         self.prices = [[0]*self.T,[0]*self.T]  # prices over T rounds
         self.profit = [[0]*self.T,[0]*self.T]  # profit in each of T rounds
-        self.demandPotential[0][0] = self.totalDemand/2 # initialise first round 0
+        self.demandPotential[0][0] = self.totalDemand/2 # initialize first round 0
         self.demandPotential[1][0] = self.totalDemand/2
 
 
@@ -76,6 +77,8 @@ class DemandPotentialGame():
         """
             Adversary follows Constant strategy
         """    
+        if self.stage == self.T-1:
+            return self.monopolyPrice(player, self.stage)
         return price
 
     def imit(self, player, firstprice): # price imitator strategy
@@ -165,11 +168,11 @@ class Model(DemandPotentialGame):
         Defines the Problem's Model. It is assumed a Markov Decision Process is defined. The class is a Child from the Demand Potential Game Class.
         The reason: Model is a conceptualization of the Game.
     """
-    def __init__(self, totalDemand,tupleCosts,totalStages, initState,adversaryProbs) -> None:
+    def __init__(self, totalDemand,tupleCosts,totalStages,adversaryProbs) -> None:
         super().__init__( totalDemand,tupleCosts,totalStages)
 
         self.rewardFunction = self.profits
-        self.initState = initState
+        self.initState = [0, totalDemand/2, ((totalDemand/2) + tupleCosts[0])/2] 
         self.episodesMemory = list()
         self.done = False
         self.adversaryProbs=adversaryProbs
@@ -180,6 +183,7 @@ class Model(DemandPotentialGame):
         """
         reward = 0
         self.stage = 0
+        self.done=False
         self.resetGame()
         self.resetAdversary()
         return torch.tensor(self.initState, dtype=torch.float32), reward, self.done
@@ -188,6 +192,7 @@ class Model(DemandPotentialGame):
         adversaryDist= Categorical(self.adversaryProbs)
         adversaryInd = (adversaryDist.sample()).item()
         self.adversaryMode=AdversaryModes(adversaryInd)
+        # print(self.adversaryMode)
 
     def adversaryChoosePrice(self): 
         """
@@ -235,16 +240,15 @@ class Model(DemandPotentialGame):
 
         done= (self.stage == self.T-1)
         if not done:
-            newState = [ self.demandPotential[1][self.stage + 1], self.prices[1][self.stage] ] 
+            newState = [self.stage ,self.demandPotential[1][self.stage + 1], self.prices[1][self.stage] ] 
         else:
-            newState=[ 0, self.prices[1][self.stage] ] 
+            newState=[self.stage ,0, self.prices[1][self.stage] ] 
         
         reward = self.rewardFunction()
         self.stage = self.stage + 1
 
         
         return torch.tensor(newState, dtype=torch.float32), reward, done
-    
 
 class AdversaryModes(Enum):
     myopic=0

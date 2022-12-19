@@ -1,6 +1,7 @@
 # Francisco, Sahar, Edward
 # ReinforceAlgorithm Class: Solver.
 
+import numpy as np #repeated
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
@@ -12,13 +13,6 @@ from matplotlib import pyplot as plt
 np.set_printoptions(precision=2, suppress=False)
 
 class Solver():
-    
-    def __init__(self,numberEpisodes, Model, discountFactor, numberIterations):
-        self.numberEpisodes = numberEpisodes    
-        self.env = Model
-        self.gamma = discountFactor
-        self.numberIterations = numberIterations
-        self.bestPolicy=None
 
     
     def __init__(self,numberEpisodes, Model, discountFactor, numberIterations):
@@ -28,6 +22,7 @@ class Solver():
         self.numberIterations = numberIterations
         self.bestPolicy=None
         
+     
 
     def runBestPolicy(self):
         """
@@ -48,7 +43,6 @@ class Solver():
 
         return returns
     
-
 
 class ReinforceAlgorithm(Solver):
     """
@@ -97,14 +91,14 @@ class ReinforceAlgorithm(Solver):
                     state, reward, done = self.env.step(prev_state, action.item())
                     retu = retu + reward
                     episodeMemory.append((prev_state, action, reward))
-		
-		
+
+
                 states = torch.stack([item[0] for item in episodeMemory])    
                 actions = torch.tensor([item[1] for item in episodeMemory]) 
                 rewards = torch.tensor([item[2] for item in episodeMemory])
-		
 
-                action_probs = self.policy(states) 
+
+                action_probs = self.policy(states) # batch (10, 15)
                 action_dists = Categorical(action_probs) 
                 action_logprobs = action_dists.log_prob(actions)
 
@@ -124,6 +118,8 @@ class ReinforceAlgorithm(Solver):
                 self.bestPolicy=self.policy
                 self.bestAverageRetu=averageRetu
             
+            plt.plot(self.returns[iteration])
+            plt.show()
 
 
     def returnsComputation(self, rewards, episodeMemory):

@@ -5,9 +5,11 @@ class NeuralNetwork():
 
     save_path_format='./NNs/{name}.pt'
 
-    def __init__(self,lr=.000001, num_actions=50, nn_dim=100) -> None:
+    def __init__(self,lr=.000001,num_input=3, num_actions=50, nn_dim=100) -> None:
     
+
         self.lr=lr
+        self.num_input= num_input
         self.num_actions = num_actions
 
         self.nn_ = nn_dim
@@ -18,7 +20,7 @@ class NeuralNetwork():
 
     def reset(self):
         self.policy = nn.Sequential(
-                            nn.Linear(2, self.nn_), 
+                            nn.Linear(self.num_input, self.nn_), 
                             nn.ReLU(),
                             nn.Linear(self.nn_,self.nn_),
                             nn.ReLU(),
