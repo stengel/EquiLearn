@@ -5,7 +5,7 @@ class NeuralNetwork():
 
     save_path_format='./NNs/{name}.pt'
 
-    def __init__(self,lr=.000001,num_input=3, num_actions=50, nn_dim=100) -> None:
+    def __init__(self,lr=0.001,num_input=3, num_actions=50, nn_dim=100) -> None:
     
 
         self.lr=lr
@@ -17,13 +17,15 @@ class NeuralNetwork():
         
 
     def reset(self):
-        self.policy = nn.Sequential(
+        self.policy = torch.nn.Sequential(
                             nn.Linear(self.num_input, self.nn_), 
+                            nn.ReLU(),
+                            nn.Linear(self.nn_, self.nn_), 
                             nn.ReLU(),
                             nn.Linear(self.nn_,self.num_actions),                       
                             nn.Softmax(dim=0))
         self.optim = torch.optim.Adam(self.policy.parameters(), lr=self.lr)
-
+        
         return self.policy, self.optim
 
     def save(self, name=None): 

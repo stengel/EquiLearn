@@ -11,6 +11,8 @@ from matplotlib import pyplot as plt
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
 
+
+
 class Solver():
 
     
@@ -20,10 +22,7 @@ class Solver():
         self.gamma = discountFactor
         self.numberIterations = numberIterations
         
-     
-
-
-    
+        
 
 class ReinforceAlgorithm(Solver):
     """
@@ -44,44 +43,51 @@ class ReinforceAlgorithm(Solver):
             Reset Policy Neural Network.
         """
         self.policy, self.optim = self.neuralNetwork.reset()
-
-
+    
 
     def  solver(self):
         """
             Method that performs Monte Carlo Policy Gradient algorithm. 
-        """
+        """ 
 
         for iteration in range(self.numberIterations):
             self.resetPolicyNet()
-
+            
             for episode in range(self.numberEpisodes):
-                if episode % 10000 == 0:
-                    print(episode)
+                # if episode % 50000 == 0:
+                    # print(episode)
                 episodeMemory = list()
                 state, reward, done = self.env.reset()
+                
+                normState = torch.tensor([  0.0000, 0.0000, 0.0000])
+                normState[0] = state[0]/25
+                normState[1] = state[1]/400
+                normState[2] = state[2]/400                 
                 retu = 0
+                
                 while not done:
-                    prev_state = state
-                    probs = self.policy(prev_state)
+                    prevState = state
+                    normPrevState = normState                                                        
                     
-                    # numActions = len(probs)
-                    # actions = list(range(numActions))
-                    # action = np.random.choice(actions, p = probs)
-                    
+                    probs = self.policy(normPrevState)
                     distAction = Categorical(probs)
                     action = distAction.sample()
                     
 
-                    state, reward, done = self.env.step(prev_state, action.item())
+                    state, reward, done = self.env.step(prevState, action.item())
+                    normState = torch.tensor([  0.0000, 0.0000, 0.0000])
+                    normState[0] = state[0]/25
+                    normState[1] = state[1]/400
+                    normState[2] = state[2]/400
                     retu = retu + reward
-                    episodeMemory.append((prev_state, action, reward))
+                    episodeMemory.append((normPrevState, action, reward))
 
 
                 states = torch.stack([item[0] for item in episodeMemory])    
-                actions = torch.tensor([item[1] for item in episodeMemory]) 
+                actions = torch.tensor([item[1] for item in episodeMemory])
+                if episode % 10000 == 0:
+                    print(actions)
                 rewards = torch.tensor([item[2] for item in episodeMemory])
-
 
                 action_probs = self.policy(states) 
                 action_dists = Categorical(action_probs) 
