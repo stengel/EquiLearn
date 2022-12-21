@@ -1,7 +1,6 @@
 # Francisco, Sahar, Edward
 # ReinforceAlgorithm Class: Solver.
 
-import numpy as np #repeated
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
