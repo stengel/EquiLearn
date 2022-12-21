@@ -19,28 +19,10 @@ class Solver():
         self.env = Model
         self.gamma = discountFactor
         self.numberIterations = numberIterations
-        self.bestPolicy=None
         
      
 
-    def runBestPolicy(self):
-        """
-            Run best policy from the Reinforcement Learning Algorithm. It needs to be used after training.
-        """
 
-        state, reward, done = self.env.reset()
-        returns = 0
-        while not done:
-            prev_state = state
-            probs = self.bestPolicy(prev_state)
-            distAction = Categorical(probs)
-            action = distAction.sample()
-
-            state, reward, done = self.env.step(prev_state, action.item())
-            returns = returns + reward
-        
-
-        return returns
     
 
 class ReinforceAlgorithm(Solver):
@@ -54,7 +36,6 @@ class ReinforceAlgorithm(Solver):
         self.neuralNetwork = neuralNet  
         self.policy = None
         self.optim = None
-        self.bestAverageRetu = 0
         self.returns = np.zeros((numberIterations, numberEpisodes))   
 
 
@@ -64,8 +45,7 @@ class ReinforceAlgorithm(Solver):
         """
         self.policy, self.optim = self.neuralNetwork.reset()
 
-    def savePolicy(self):
-         pass
+
 
     def  solver(self):
         """
@@ -76,16 +56,22 @@ class ReinforceAlgorithm(Solver):
             self.resetPolicyNet()
 
             for episode in range(self.numberEpisodes):
-                if episode % 50000 == 0:
-                    print (episode)
+                if episode % 10000 == 0:
+                    print(episode)
                 episodeMemory = list()
                 state, reward, done = self.env.reset()
                 retu = 0
                 while not done:
                     prev_state = state
                     probs = self.policy(prev_state)
+                    
+                    # numActions = len(probs)
+                    # actions = list(range(numActions))
+                    # action = np.random.choice(actions, p = probs)
+                    
                     distAction = Categorical(probs)
                     action = distAction.sample()
+                    
 
                     state, reward, done = self.env.step(prev_state, action.item())
                     retu = retu + reward
@@ -97,7 +83,7 @@ class ReinforceAlgorithm(Solver):
                 rewards = torch.tensor([item[2] for item in episodeMemory])
 
 
-                action_probs = self.policy(states) # batch (10, 15)
+                action_probs = self.policy(states) 
                 action_dists = Categorical(action_probs) 
                 action_logprobs = action_dists.log_prob(actions)
 
@@ -111,14 +97,7 @@ class ReinforceAlgorithm(Solver):
 
                 self.returns[iteration][episode] = retu #sum of the our player's rewards  rounds 0-25 
 
-                
-            averageRetu= ((self.returns[iteration]).sum())/(self.numberEpisodes)
-            if (self.bestPolicy is None) or (averageRetu > self.bestAverageRetu):
-                self.bestPolicy=self.policy
-                self.bestAverageRetu=averageRetu
-            
-            plt.plot(self.returns[iteration])
-            plt.show()
+       
 
 
     def returnsComputation(self, rewards, episodeMemory):
@@ -126,6 +105,5 @@ class ReinforceAlgorithm(Solver):
         Method computes vector of returns for every stage. The returns are the cumulative rewards from that stage.
         """
         return torch.tensor( [torch.sum( rewards[i:] * (self.gamma ** torch.arange(0, (len(episodeMemory)-i))) ) for i in range(len(episodeMemory)) ] )
-	 
-#class ActorCriticAlgorithm(Solver):
+
     

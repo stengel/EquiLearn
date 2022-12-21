@@ -11,9 +11,7 @@ class NeuralNetwork():
         self.lr=lr
         self.num_input= num_input
         self.num_actions = num_actions
-
         self.nn_ = nn_dim
-
         self.nn_name=f"nn, lr={self.lr}, actions={self.num_actions}"
 
         
@@ -21,8 +19,6 @@ class NeuralNetwork():
     def reset(self):
         self.policy = nn.Sequential(
                             nn.Linear(self.num_input, self.nn_), 
-                            nn.ReLU(),
-                            nn.Linear(self.nn_,self.nn_),
                             nn.ReLU(),
                             nn.Linear(self.nn_,self.num_actions),                       
                             nn.Softmax(dim=0))

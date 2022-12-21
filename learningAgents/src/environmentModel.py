@@ -35,7 +35,7 @@ class DemandPotentialGame():
         self.demandPotential = [[0]*(self.T),[0]*(self.T)] # two lists for the two players
         self.prices = [[0]*self.T,[0]*self.T]  # prices over T rounds
         self.profit = [[0]*self.T,[0]*self.T]  # profit in each of T rounds
-        self.demandPotential[0][0] = self.totalDemand/2 # initialize first round 0
+        self.demandPotential[0][0] = self.totalDemand/2 # initialise first round 0
         self.demandPotential[1][0] = self.totalDemand/2
 
 
@@ -192,7 +192,6 @@ class Model(DemandPotentialGame):
         adversaryDist= Categorical(self.adversaryProbs)
         adversaryInd = (adversaryDist.sample()).item()
         self.adversaryMode=AdversaryModes(adversaryInd)
-        # print(self.adversaryMode)
 
     def adversaryChoosePrice(self): 
         """
@@ -243,10 +242,9 @@ class Model(DemandPotentialGame):
             newState = [self.stage ,self.demandPotential[1][self.stage + 1], self.prices[1][self.stage] ] 
         else:
             newState=[self.stage ,0, self.prices[1][self.stage] ] 
-        
+       
         reward = self.rewardFunction()
         self.stage = self.stage + 1
-
         
         return torch.tensor(newState, dtype=torch.float32), reward, done
 
