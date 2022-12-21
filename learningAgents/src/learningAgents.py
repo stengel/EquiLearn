@@ -1,7 +1,6 @@
 # Francisco, Sahar, Edward
 # ReinforceAlgorithm Class: Solver.
 
-import numpy as np #repeated
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
@@ -77,21 +76,26 @@ class ReinforceAlgorithm(Solver):
             self.resetPolicyNet()
 
             for episode in range(self.numberEpisodes):
-                if episode % 50000 == 0:
-                    print (episode)
+                
                 episodeMemory = list()
+                actions=list()
                 state, reward, done = self.env.reset()
                 retu = 0
+                
                 while not done:
                     prev_state = state
                     probs = self.policy(prev_state)
                     distAction = Categorical(probs)
                     action = distAction.sample()
-
+                    actions.append(action.item())
                     state, reward, done = self.env.step(prev_state, action.item())
                     retu = retu + reward
                     episodeMemory.append((prev_state, action, reward))
 
+
+                if episode % 10_000 == 0:
+                    print (episode)
+                    print(actions)
 
                 states = torch.stack([item[0] for item in episodeMemory])    
                 actions = torch.tensor([item[1] for item in episodeMemory]) 

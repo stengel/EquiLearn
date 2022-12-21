@@ -168,14 +168,17 @@ class Model(DemandPotentialGame):
         Defines the Problem's Model. It is assumed a Markov Decision Process is defined. The class is a Child from the Demand Potential Game Class.
         The reason: Model is a conceptualization of the Game.
     """
-    def __init__(self, totalDemand,tupleCosts,totalStages,adversaryProbs) -> None:
+    def __init__(self, totalDemand,tupleCosts,totalStages,adversaryProbs, advHistoryNum=3) -> None:
         super().__init__( totalDemand,tupleCosts,totalStages)
 
         self.rewardFunction = self.profits
-        self.initState = [0, totalDemand/2, ((totalDemand/2) + tupleCosts[0])/2] 
+
+        # [stage, agent's demand potential, agent's last price, history of adversary's prices]
+        self.initState = [0, totalDemand/2, ((totalDemand/2) + tupleCosts[0])/2] + ([0]*advHistoryNum) 
         self.episodesMemory = list()
         self.done = False
         self.adversaryProbs=adversaryProbs
+        self.advHistoryNum=advHistoryNum #number of previous adversary's action we consider in the state
         
     def reset(self):
         """
@@ -236,13 +239,22 @@ class Model(DemandPotentialGame):
         - state: tupple in the latest stage (Demand Potential, Price)
         """
         adversaryAction = self.adversaryChoosePrice()
+        myopicPrice=self.myopic()
         self.updatePricesProfitDemand( [self.myopic() - action, adversaryAction] )     
 
         done= (self.stage == self.T-1)
+
+        advHistory= [0]*self.advHistoryNum
+        j=self.advHistoryNum-1
+        for i in range(self.stage, max(-1, self.stage-self.advHistoryNum),-1):
+            advHistory[j]=self.prices[1][i]
+            j-=1
+
+
         if not done:
-            newState = [self.stage ,self.demandPotential[1][self.stage + 1], self.prices[1][self.stage] ] 
+            newState = [self.stage+1 ,self.demandPotential[0][self.stage + 1], self.prices[0][self.stage] ] + advHistory
         else:
-            newState=[self.stage ,0, self.prices[1][self.stage] ] 
+            newState=[self.stage+1 ,0, self.prices[0][self.stage] ] + advHistory
         
         reward = self.rewardFunction()
         self.stage = self.stage + 1
