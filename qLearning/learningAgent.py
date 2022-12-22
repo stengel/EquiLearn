@@ -2,10 +2,7 @@
 # ReinforceAlgorithm Class: Solver.
 
 import numpy as np #repeated
-#import torch
-#import torch.nn as nn
-#from torch.distributions import Categorical
-import sys
+
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
 
@@ -33,20 +30,13 @@ class LearningAlgorithm():
         self.lowestState = int(200-(self.numStates)/2)
         self.highestState = int(200+(self.numStates)/2 - 1)
 
-        #self.numberIterations = numberIterations
-        #self.neuralNetwork = neuralNet
-        #self.policy = None
-        #self.optim = None
-        #self.bestPolicy=None
-        #self.bestAverageRetu = 0
-
         """
         This function will eventually choose and adversary agent to play against
         and according to that return an action played by that adversary. 
         This could be chosen according to some existing equilibruim dist.
         """
-    def chooseAdver(self, st):
-        return int((400-st +self.env.costs[1])/2) + 1 #myopic
+    def chooseAdver(self, state):
+        return int((400 - state + self.env.costs[1])/2) + 1 #myopic
 
     def StateInd(self, state):                 # computes state index in Qtable
         return int(state -(200-self.numStates/2))

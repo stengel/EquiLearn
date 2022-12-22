@@ -19,7 +19,7 @@ gamma = 0.99
 Qtable = np.zeros((num_States, num_Actions))
 Qtable_error = np.zeros((num_States, num_Actions))
 
-algorithm = LearningAlgorithm(game, Qtable, numberEpisodes = 100000000, discountFactor = gamma)
+algorithm = LearningAlgorithm(game, Qtable, numberEpisodes = 10000, discountFactor = gamma)
 
 algorithm.solver()
 
