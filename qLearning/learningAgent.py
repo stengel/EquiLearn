@@ -9,8 +9,8 @@ import sys
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
 
-5
-class ReinforceAlgorithm():
+
+class LearningAlgorithm():
     """
         Model Solver.
     """
@@ -56,7 +56,7 @@ class ReinforceAlgorithm():
         return int(action-(monprice-self.numActions+1))
 
     def alpha_n(self, n):                       # defines the Qlearning rate
-        return 500/(n+600)
+        return 50000/(n+60000)
     """
     Now the Q-learning itself 
     """
