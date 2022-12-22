@@ -5,7 +5,7 @@ class NeuralNetwork():
 
     save_path_format='./NNs/{name}.pt'
 
-    def __init__(self,lr=0.001,num_input=3, num_actions=50, nn_dim=100) -> None:
+    def __init__(self,lr=0.00001,num_input=3, num_actions=100, nn_dim=100) -> None:
     
 
         self.lr=lr

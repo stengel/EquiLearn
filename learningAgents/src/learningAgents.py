@@ -54,8 +54,8 @@ class ReinforceAlgorithm(Solver):
             self.resetPolicyNet()
             
             for episode in range(self.numberEpisodes):
-                # if episode % 50000 == 0:
-                    # print(episode)
+                if episode % 50000 == 0:
+                    print(episode)
                 episodeMemory = list()
                 state, reward, done = self.env.reset()
                 
@@ -85,7 +85,7 @@ class ReinforceAlgorithm(Solver):
 
                 states = torch.stack([item[0] for item in episodeMemory])    
                 actions = torch.tensor([item[1] for item in episodeMemory])
-                if episode % 10000 == 0:
+                if episode % 5000 == 0:
                     print(actions)
                 rewards = torch.tensor([item[2] for item in episodeMemory])
 
@@ -94,7 +94,10 @@ class ReinforceAlgorithm(Solver):
                 action_logprobs = action_dists.log_prob(actions)
 
                 returns = self.returnsComputation(rewards, episodeMemory)
-
+                
+                if episode % 5000 == 0:
+                    print(returns[0])
+                    
                 loss = - ( torch.sum(returns*action_logprobs) )/len(episodeMemory)
 
                 self.optim.zero_grad()
@@ -102,7 +105,8 @@ class ReinforceAlgorithm(Solver):
                 self.optim.step()
 
                 self.returns[iteration][episode] = retu #sum of the our player's rewards  rounds 0-25 
-
+                # if we want to look at the discounted returns, we want 
+                self.returns[iteration][episode] = returns[0]
        
 
 
