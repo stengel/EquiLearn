@@ -5,23 +5,21 @@ import torch
 import torch.nn as nn
 from torch.distributions import Categorical
 import sys
-import numpy as np # numerical python
+import numpy as np  # numerical python
 import pandas as pd
 from matplotlib import pyplot as plt
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
 
+
 class Solver():
 
-    
-    def __init__(self,numberEpisodes, Model, discountFactor, numberIterations):
-        self.numberEpisodes = numberEpisodes    
+    def __init__(self, numberEpisodes, Model, discountFactor, numberIterations):
+        self.numberEpisodes = numberEpisodes
         self.env = Model
         self.gamma = discountFactor
         self.numberIterations = numberIterations
-        self.bestPolicy=None
-        
-     
+        self.bestPolicy = None
 
     def runBestPolicy(self):
         """
@@ -38,25 +36,24 @@ class Solver():
 
             state, reward, done = self.env.step(prev_state, action.item())
             returns = returns + reward
-        
 
         return returns
-    
+
 
 class ReinforceAlgorithm(Solver):
     """
         Model Solver.
     """
+
     def __init__(self, Model, neuralNet, numberIterations, numberEpisodes, discountFactor) -> None:
         super().__init__(numberEpisodes, Model, discountFactor, numberIterations)
 
         self.env.adversaryReturns = np.zeros(numberEpisodes)
-        self.neuralNetwork = neuralNet  
+        self.neuralNetwork = neuralNet
         self.policy = None
         self.optim = None
         self.bestAverageRetu = 0
-        self.returns = np.zeros((numberIterations, numberEpisodes))   
-
+        self.returns = np.zeros((numberIterations, numberEpisodes))
 
     def resetPolicyNet(self):
         """
@@ -65,9 +62,9 @@ class ReinforceAlgorithm(Solver):
         self.policy, self.optim = self.neuralNetwork.reset()
 
     def savePolicy(self):
-         pass
+        pass
 
-    def  solver(self):
+    def solver(self):
         """
             Method that performs Monte Carlo Policy Gradient algorithm. 
         """
@@ -76,61 +73,65 @@ class ReinforceAlgorithm(Solver):
             self.resetPolicyNet()
 
             for episode in range(self.numberEpisodes):
-                
+
                 episodeMemory = list()
-                actions=list()
                 state, reward, done = self.env.reset()
                 retu = 0
-                
+
                 while not done:
-                    prev_state = state
-                    probs = self.policy(prev_state)
+                    prevState = state
+                    normPrevState = self.normalizeState(prevState)
+                    probs = self.policy(normPrevState)
                     distAction = Categorical(probs)
                     action = distAction.sample()
-                    actions.append(action.item())
-                    state, reward, done = self.env.step(prev_state, action.item())
+
+                    state, reward, done = self.env.step(
+                        prevState, action.item())
                     retu = retu + reward
-                    episodeMemory.append((prev_state, action, reward))
+                    episodeMemory.append((normPrevState, action, reward))
 
-
-                if episode % 10_000 == 0:
-                    print (episode)
-                    print(actions)
-
-                states = torch.stack([item[0] for item in episodeMemory])    
-                actions = torch.tensor([item[1] for item in episodeMemory]) 
+                states = torch.stack([item[0] for item in episodeMemory])
+                actions = torch.tensor([item[1] for item in episodeMemory])
                 rewards = torch.tensor([item[2] for item in episodeMemory])
 
+                if episode % 10_000 == 0:
+                    print(episode)
+                    print(actions)
 
-                action_probs = self.policy(states) # batch (10, 15)
-                action_dists = Categorical(action_probs) 
+                action_probs = self.policy(states)
+                action_dists = Categorical(action_probs)
                 action_logprobs = action_dists.log_prob(actions)
 
                 returns = self.returnsComputation(rewards, episodeMemory)
 
-                loss = - ( torch.sum(returns*action_logprobs) )/len(episodeMemory)
+                loss = - (torch.sum(returns*action_logprobs)) / \
+                    len(episodeMemory)
 
                 self.optim.zero_grad()
                 loss.backward()
                 self.optim.step()
 
-                self.returns[iteration][episode] = retu #sum of the our player's rewards  rounds 0-25 
+                # sum of the our player's rewards  rounds 0-25
+                self.returns[iteration][episode] = retu
 
-                
-            averageRetu= ((self.returns[iteration]).sum())/(self.numberEpisodes)
+            averageRetu = (
+                (self.returns[iteration]).sum())/(self.numberEpisodes)
             if (self.bestPolicy is None) or (averageRetu > self.bestAverageRetu):
-                self.bestPolicy=self.policy
-                self.bestAverageRetu=averageRetu
-            
+                self.bestPolicy = self.policy
+                self.bestAverageRetu = averageRetu
+
             plt.plot(self.returns[iteration])
             plt.show()
-
 
     def returnsComputation(self, rewards, episodeMemory):
         """
         Method computes vector of returns for every stage. The returns are the cumulative rewards from that stage.
         """
-        return torch.tensor( [torch.sum( rewards[i:] * (self.gamma ** torch.arange(0, (len(episodeMemory)-i))) ) for i in range(len(episodeMemory)) ] )
-	 
-#class ActorCriticAlgorithm(Solver):
-    
+        return torch.tensor([torch.sum(rewards[i:] * (self.gamma ** torch.arange(0, (len(episodeMemory)-i)))) for i in range(len(episodeMemory))])
+
+    def normalizeState(self, state):
+        normalized = [0]*len(state)
+        normalized[0] = state[0]/(self.env.T)
+        for i in range(1, len(state)):
+            normalized[i] = state[i]/(self.env.totalDemand)
+        return torch.tensor(normalized)
