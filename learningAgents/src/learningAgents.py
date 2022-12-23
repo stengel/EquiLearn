@@ -1,6 +1,6 @@
 # Francisco, Sahar, Edward
 # ReinforceAlgorithm Class: Solver.
-
+import environmentModel as em
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
@@ -76,7 +76,7 @@ class ReinforceAlgorithm(Solver):
 
                 episodeMemory = list()
                 state, reward, done = self.env.reset()
-                retu = 0
+                returns = 0
 
                 while not done:
                     prevState = state
@@ -87,7 +87,7 @@ class ReinforceAlgorithm(Solver):
 
                     state, reward, done = self.env.step(
                         prevState, action.item())
-                    retu = retu + reward
+                    returns = returns + reward
                     episodeMemory.append((normPrevState, action, reward))
 
                 states = torch.stack([item[0] for item in episodeMemory])
@@ -102,9 +102,13 @@ class ReinforceAlgorithm(Solver):
                 action_dists = Categorical(action_probs)
                 action_logprobs = action_dists.log_prob(actions)
 
-                returns = self.returnsComputation(rewards, episodeMemory)
+                discReturns = self.returnsComputation(rewards, episodeMemory)
 
-                loss = - (torch.sum(returns*action_logprobs)) / \
+                # is it a good idea? to get over the big weights in NN
+                discReturns/=1000
+                
+
+                loss = - (torch.sum(discReturns*action_logprobs)) / \
                     len(episodeMemory)
 
                 self.optim.zero_grad()
@@ -112,13 +116,13 @@ class ReinforceAlgorithm(Solver):
                 self.optim.step()
 
                 # sum of the our player's rewards  rounds 0-25
-                self.returns[iteration][episode] = retu
+                self.returns[iteration][episode] = returns
 
-            averageRetu = (
-                (self.returns[iteration]).sum())/(self.numberEpisodes)
-            if (self.bestPolicy is None) or (averageRetu > self.bestAverageRetu):
-                self.bestPolicy = self.policy
-                self.bestAverageRetu = averageRetu
+            # averageRetu = (
+            #     (self.returns[iteration]).sum())/(self.numberEpisodes)
+            # if (self.bestPolicy is None) or (averageRetu > self.bestAverageRetu):
+            #     self.bestPolicy = self.policy
+            #     self.bestAverageRetu = averageRetu
 
             plt.plot(self.returns[iteration])
             plt.show()
@@ -135,3 +139,39 @@ class ReinforceAlgorithm(Solver):
         for i in range(1, len(state)):
             normalized[i] = state[i]/(self.env.totalDemand)
         return torch.tensor(normalized)
+
+    def playTrainedAgent(self, advMode, iterNum):
+        advProbs = torch.zeros(len(em.AdversaryModes))
+        advProbs[int(advMode.value)] = 1
+        game = em.Model(totalDemand=self.env.totalDemand,
+                        tupleCosts=self.env.costs,
+                        totalStages=self.env.T, advHistoryNum=self.env.advHistoryNum, adversaryProbs=advProbs)
+        returns = np.zeros(iterNum)
+        for episode in range(iterNum):
+
+            episodeMemory = list()
+            state, reward, done = game.reset()
+            retu = 0
+
+            while not done:
+                prevState = state
+                normPrevState = self.normalizeState(prevState)
+                probs = self.neuralNetwork(normPrevState)
+                distAction = Categorical(probs)
+                action = distAction.sample()
+
+                state, reward, done = game.step(
+                    prevState, action.item())
+                retu = retu + reward
+                episodeMemory.append((normPrevState, action, reward))
+
+            states = torch.stack([item[0] for item in episodeMemory])
+            actions = torch.tensor([item[1] for item in episodeMemory])
+            rewards = torch.tensor([item[2] for item in episodeMemory])
+
+            print(f"episode {episode} return= {retu} \n\t actions: {actions}")
+
+            # sum of the our player's rewards  rounds 0-25
+            returns[episode] = retu
+        plt.plot(returns)
+        plt.show()
