@@ -1,0 +1,942 @@
+% using Lemke
+\documentclass[a4paper,12pt]{article}  %% important: a4paper first
+%
+\usepackage[notcite,notref]{showkeys}
+\pdfoutput=1
+\usepackage{natbib} 
+\usepackage{amsthm}
+\usepackage{newpxtext,newpxmath} 
+\usepackage{microtype}
+\linespread{1.10}        % Palatino needs more leading (space between lines)
+\usepackage{xcolor}
+\usepackage{pict2e} 
+\usepackage{bimatrixgame}
+\usepackage{tikz} 
+\usetikzlibrary{shapes}
+\usetikzlibrary{arrows.meta}
+\usepackage{amssymb}
+%\usepackage{smallsec}
+\usepackage{graphicx}
+%\usepackage[pdflatex]{hyperref}
+\usepackage[hyphens]{url} 
+\usepackage[colorlinks,linkcolor=blue,citecolor=blue]{hyperref}
+%\usepackage{hyperref}
+\urlstyle{sf}
+\usepackage[format=hang,justification=justified,labelfont=bf,labelsep=quad]{caption} 
+% \input macros-drawtree
+\oddsidemargin=.46cm    % A4
+\textwidth=15cm
+\textheight=23.3cm
+\topmargin=-1.3cm
+\clubpenalty=10000
+\widowpenalty=10000
+\predisplaypenalty=1350
+\sfcode`E=1000  % normal spacing if E followed by period, as in "EFCE."
+\sfcode`P=1000  % normal spacing if P followed by period, as in "NP." 
+\newdimen\einr
+\einr1.7em
+\newdimen\eeinr 
+\eeinr 1.7\einr
+\def\aabs#1{\par\hangafter=1\hangindent=\eeinr
+    \noindent\hbox to\eeinr{\strut\hskip\einr#1\hfill}\ignorespaces}
+\def\rmitem#1{\par\hangafter=1\hangindent=\einr
+  \noindent\hbox to\einr{\ignorespaces#1\hfill}\ignorespaces} 
+\newcommand\bullitem{\rmitem{\raise.17ex\hbox{\kern7pt\scriptsize$\bullet$}}} 
+\def\subbull{\vskip-.8\parskip\aabs{\raise.2ex\hbox{\footnotesize$\circ$}}}
+\let\sfield\mathcal
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+\def\reals{{\mathbb R}} 
+\def\eps{\varepsilon}
+\def\prob{\hbox{prob}}
+\def\sign{\hbox{sign}}
+\def\proof{\noindent{\em Proof.\enspace}}
+\def\proofof#1{\noindent{\em Proof of #1.\enspace}}
+\def\endproof{\hfill\strut\nobreak\hfill\tombstone\par\medbreak}
+\def\tombstone{\hbox{\lower.4pt\vbox{\hrule\hbox{\vrule
+  \kern7.6pt\vrule height7.6pt}\hrule}\kern.5pt}}
+\def\eqalign#1{\,\vcenter{\openup.7ex\mathsurround=0pt
+ \ialign{\strut\hfil$\displaystyle{##}$&$\displaystyle{{}##}$\hfil
+ \crcr#1\crcr}}\,}
+\def\zw#1\par{\vskip2ex{\textbf{#1}}\par\nobreak} 
+\newdimen\pix  % bounding box height for eps files
+\pix0.08ex
+\newsavebox{\figA} 
+\parindent0pt
+\parskip1.3ex
+
+\newcommand{\T}{^{\top}}
+\newcommand{\0}{{\mathbf0}}
+\newcommand{\1}{{\mathbf1}}
+
+
+\title{%
+Path-Following for Bimatrix Games Using Lemke's Algorithm
+}
+
+\author{Bernhard von Stengel}
+
+%\date{Febuary 6, 2012}
+\date{\today
+\\[1ex]
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We study three path-following methods that find at least one
+equilibrium of a bimatrix game, and show how to implement
+them as special cases of Lemke's algorithm.
+These methods are the global Newton method, with the
+Lemke-Howson algorithm as a special case, and the
+van den Elzen-Talman linear tracing procedure.
+
+% \noindent 
+% \textbf{ACM classification:} 
+% CCS
+% $\to$ Theory of computation
+% $\to$ Theory and algorithms for application domains
+% $\to$ Algorithmic game theory and mechanism design
+% $\to$ Solution concepts in game theory,
+% exact and approximate computation of equilibria,
+% representations of games and their complexity
+% 
+% 
+% \strut
+% 
+% \noindent 
+% \textbf{AMS subject classification:} 
+% 91A18  (Games in extensive form)
+% 
+% \strut
+% 
+% \noindent 
+% \textbf{JEL classification:} 
+% C72 (Noncooperative Games)
+% 
+% \strut
+% 
+% \noindent 
+% \textbf{Keywords:}
+% extensive game,
+% correlated equilibrium,
+% polynomial-time algorithm,
+% computational complexity.
+% 
+\end{abstract}
+
+\section{Linear complementarity} 
+\label{s-lcp}
+
+All vectors are column vectors, and $\0$ and $\1$ are the
+all-zero and all-one vector, respectively, their dimension
+depending on the context.
+Vectors and scalars are treated as matrices and positioned
+such that matrix multiplication works (as in column vector
+times a scalar, but scalar times a row vector).
+
+The dimension of an LCP is denoted by $N$ rather than $n$
+because we consider $m\times n$ bimatrix games.
+
+The standard linear complementarity problem or LCP $(q,M)$
+is specified by an $N$-vector $q$ and an $N\times N$ matrix
+$M$ and states: find an $N$-vector $z$ such that
+\begin{equation}
+\label{lcp}
+z\ge\0
+\quad\bot\quad
+q+Mz\ge\0
+\end{equation}
+where the inequalities are meant to hold and
+the symbol $\bot$ denotes orthogonality and thus
+complementarity of the respective slacks; that is, for
+general $N$-vectors $a,b,c,d$:
+\begin{equation}
+\label{bot}
+a\ge b
+\quad\bot\quad 
+c\ge d
+\qquad:\Leftrightarrow\qquad
+a\ge b,~~
+c\ge d,~~
+(a-b)\T (c-d)=0\,.
+\end{equation}
+
+In an $m\times n$ bimatrix game $(A,B)$, let 
+$X$ and $Y$ be the mixed-strategy sets of the row and column
+player, respectively,
+\begin{equation}
+\label{XY}
+X=\{x\in\reals^m\mid x\ge\0,~\1\T x=1\},
+\qquad
+Y=\{y\in\reals^n\mid y\ge\0,~\1\T y=1\}. 
+\end{equation}
+A mixed Nash equilibrium or just \textit{equilibrium} of
+$(A,B)$ is a pair $(x,y)\in X\times Y$ such that there are
+reals $u$ and $v$ with
+\begin{equation}
+\label{NE}
+x\ge\0
+\quad\bot\quad 
+Ay\le\1 u\,,\qquad
+y\ge\0
+\quad\bot\quad 
+B\T x\le\1 v\,,
+\end{equation}
+where $u$ and $v$ are the equilibrium payoffs to the row and
+column player, respectively.
+Condition (\ref{NE}) is the best-response condition that
+every pure strategy that has positive probability must be a
+pure best response against the other player's mixed
+strategy.
+
+This is a special case of an LCP, and the algorithm 
+by \citet{Lemke1965} for solving an LCP can be used to
+represent several path-following methods for finding an
+equilibrium of a bimatrix game.
+In order to do so, we will employ several variable
+transformations.
+
+First, we represent the unrestricted
+variables $u$ and $v$ in (\ref{NE}) as differences of
+nonnegative variables in the form
+\begin{equation}
+\label{uv+-}
+u=u^+-u^-,\quad u^+\ge0,~ u^-\ge0,~
+\qquad
+v=v^+-v^-,\quad v^+\ge0,~ v^-\ge0,~ 
+\end{equation}
+and the equations $\1\T x=1$ and $\1\T y=1$ as two
+inequalities, as follows:
+\begin{equation}
+\label{lcpAB}
+\arraycolsep.2em
+\begin{array}{rcrrllcrr}
+% \begin{array}{rcllrrcrr} 
+x\ge\0&\quad\bot\quad&
+&-Ay
+&
+{}+\1u^+-\1u^-
+&&\ge&\0
+\\
+y\ge\0&\quad\bot\quad&
+-B\T x&&
+&{}+\1v^+-\1v^-
+&\ge&\0&
+\\
+u^+\ge0&\quad\bot\quad&
+-\1\T x&&&&\ge&-1
+\\
+u^-\ge0&\quad\bot\quad&
+\1\T x&&&&\ge&1
+\\
+v^+\ge0&\quad\bot\quad&
+&-\1\T y&&&\ge&-1
+\\
+v^-\ge0&\quad\bot\quad&
+&\1\T y&&&\ge&1
+\end{array}
+\end{equation}
+Suppose that neither equilibrium payoff $u$ or $v$ is zero.
+For example, if $v<0$ then $v^->0$ and the last inequality
+in (\ref{lcpAB}) is tight, that is, $\1\T y=1$ and thus
+$y\in Y$.
+We have chosen the complementarity conditions in
+(\ref{lcpAB}) so that the constraint matrix $M$ is
+skew-symmetric ($M=-M\T$) if the game is zero-sum
+($B=-A$). 
+It will be convenient to have an LCP matrix $M$ where the
+sub-matrices $-A$ and $-B\T$ are positive, that is,
+\begin{equation}
+\label{ABneg}
+A<0,\qquad B<0,
+\end{equation}
+which can always be achieved by subtracting a sufficiently
+large constant from the entries of $A$ and $B$.
+Then any equilibrium payoffs $u$ and $v$ are negative, so
+that we can choose
+\begin{equation}
+\label{uv-}
+u^+=v^+=0,\qquad
+u=-u^-,\qquad
+v=-v^-,
+\end{equation}
+and (\ref{lcpAB}) simplifies to
+\begin{equation}
+\label{lcpAB-}
+\arraycolsep.2em
+\begin{array}{rcrrllcrr}
+% \begin{array}{rcllrrcrr} 
+x\ge\0&\quad\bot\quad&
+&-Ay
+&
+{}-\1u^-
+&&\ge&\0
+\\
+y\ge\0&\quad\bot\quad&
+-B\T x&&
+&{}-\1v^-
+&\ge&\0&
+\\
+u^-\ge0&\quad\bot\quad&
+\1\T x&&&&\ge&1
+\\
+v^-\ge0&\quad\bot\quad&
+&\1\T y&&&\ge&1&.
+\end{array}
+\end{equation}
+% \begin{equation}
+% \label{lcpAB-}
+% \arraycolsep.2em
+% \begin{array}{rcllrrcrr}
+% u^-\ge0&\quad\bot\quad&
+% &&\1\T x&&\ge&1
+% \\
+% v^-\ge0&\quad\bot\quad&
+% &&&\1\T y&\ge&1
+% \\
+% x\ge\0&\quad\bot\quad&
+% -\1u^-
+% &&&-Ay
+% &\ge&\0
+% \\
+% y\ge\0&\quad\bot\quad&
+% &-\1v^-
+% &-B\T x&
+% &\ge&\0&.
+% \end{array}
+% \end{equation}
+By (\ref{ABneg}) and complementarity, $u^-=-u>0$ and
+%$v^-=-v>0$ in any solution $(u^-,v^-,x,y)$ to 
+$v^-=-v>0$ in any solution $(x,y,u^-,v^-)$ to
+% (\ref{lcpAB-}), and the first two inequalities are therefore
+(\ref{lcpAB-}), and the last two inequalities are therefore
+tight, that is, $x\in X$ and $y\in Y$. 
+
+A second variable transformation changes the ``homotopy
+parameter'' $\lambda$ in the ``global Newton method'' (see
+Section~\ref{s-path}). 
+We first summarize Lemke's algorithm.
+
+\section{Lemke's algorithm}
+\label{s-lemke}
+
+\citet{Lemke1965} described an algorithm for solving the LCP
+(\ref{lcp}).
+It uses an additional $N$-vector $d$, called
+\textit{covering vector}, with a corresponding scalar variable~$z_0$,
+and computes with \textit{basic solutions} to the augmented system
+\begin{equation}
+\label{lcp0}
+z\ge\0,\quad z_0\ge0,\qquad
+w=q+Mz+dz_0\ge\0,\qquad
+z\T w=0\,.
+\end{equation}
+Any solution $z,z_0$ to (\ref{lcp0}) is called
+\textit{almost complementary}, and
+\textit{complementary} if $z_0=0$, which implies (\ref{lcp}).
+The vector $d$ is assumed to fulfill
+\begin{equation}
+\label{d}
+d\ge\0,
+\qquad
+q_i<0\quad\Rightarrow\quad d_i>0
+\quad
+(1\le i\le N). 
+\end{equation}
+This implies that for $z=\0$ and all sufficiently large
+$z_0$ we have $w = q + dz_0\ge\0$ and $z\T w = 0$, so that
+(\ref{lcp0}) holds.
+The set of these almost complementary solutions is called
+the \textit{primary ray}.
+
+For initialization, let $z_0$ be minimal such that $w=q+dz_0\ge\0$.
+Unless $q\ge\0$ (in which case the LCP is solved
+immediately), $z_0$ is positive and some component $w_i$ of
+$w$ is zero.
+A first pivoting step lets $z_0$ enter and $w_i$ leave the
+basis.
+The algorithm then performs a sequence of
+\textit{complementary pivoting} steps.
+At each step, one variable of a complementary pair $(z_i,w_i)$
+leaves and then its \textit{complement} (the other variable)
+enters the basis, which maintains the condition $z\T w=0$.
+With a suitable lexicographic symbolic perturbation, the
+leaving variable (including the first leaving variable $w_i$
+when $z_0$ enters) is always unique, so that the algorithm
+follows a unique path.
+% In a mixed LCP, a variable $z_i$ without sign restrictions
+% never leaves the basis.
+The goal is that eventually $z_0$ leaves the basis and then
+has value zero, so that the LCP (\ref{lcp}) is solved.
+
+Lemke's algorithm could also terminate with a
+\textit{secondary ray}, which happens when the entering
+variable can assume arbitrarily positive values (as in the
+simplex algorithm for linear programming for an unbounded
+objective function).
+Certain conditions on the LCP data $(q,M)$ exclude this ray
+termination.
+These hold if $A$ and $B$ are negative as in (\ref{ABneg}),
+as shown in \citet[theorem 4.1]{KMvS96} if the LCP is
+presented in its original form (\ref{lcpAB}), and also in
+its shortened form (\ref{lcpAB-}) using additional
+considerations.
+We will be able to exclude ray termination with a more
+direct argument.
+
+% \begin{theorem}
+% \label{t-noray}
+% If $z\T Mz\ge0$ for all $z\ge\0$, and $z\ge\0$, $Mz\ge\0$
+% and $z\T Mz=0$ imply $z\T q\ge0$, then Lemke's algorithm
+% computes a solution of the LCP $(\ref{lcp})$ and does not
+% terminate with a secondary ray.
+% \end{theorem}
+% 
+% \proof
+% See \citet[theorem 4.4.13]{CPS} or
+% \citet[theorem 4.1]{KMvS96}, which has detailed comments on related
+% observations, including in \cite{Lemke1965}.
+% \endproof
+% 
+% \begin{theorem}
+% With negative payoff matrices $A$ and $B$ as in
+% $(\ref{ABneg})$ and, as in $(\ref{lcpAB-})$,
+% \begin{equation}
+% \label{tlcp}
+% z=\left[\begin{matrix}x\\y\\ u^-\\v^-
+% \end{matrix}\right],\quad
+% q=\left[\begin{matrix}\0\\ \0\\  -1\\-1
+% \end{matrix}\right],\quad 
+% M=\left[\begin{matrix}
+% &-A&\1\\
+% -B\T&&&-\1\\
+% \1\T &\\
+% &\1\T\\
+% \end{matrix}\right],\quad 
+% \end{equation}
+
+% the LCP $(q,M)$ fulfills the assumptions in
+% Theorem~\ref{t-noray}.
+% \end{theorem}
+% 
+% \proof
+% We have $z\T Mz=-x\T Ay -y\T B\T x$, which by (\ref{ABneg})
+% is nonnegative if $z\ge\0$.
+% Suppose $z\ge\0~\bot~Mz\ge\0$, where we want to show that
+% $z\T q=-u^--v^-\ge0$.
+% We have $x\ge\0$,
+% $y\ge\0$, $u^-\ge0$, $v^-\ge0$, $-Ay-\1u^-\ge\0$,
+% $-B\T x-\1v^-\ge\0$, and
+% $u^-\ge0~\bot~\1\T x\ge\0$ and
+% $v^-\ge0~\bot~\1\T y\ge\0$.
+% The latter condition implies $u^-=0$ if $x\ne\0$ and 
+% \endproof 
+% 
+\section{Path-following of equilibria}
+\label{s-path}
+
+The general ``homotopy'' approach to finding an equilibrium
+of a game in strategic form is to modify the game to a
+one-parameter set of games with a real parameter~$\lambda$
+such that $\lambda=0$ corresponds to the given game, and a
+sufficiently large value of~$\lambda$ has an equilibrium
+that is easy to find, which serves as a \textit{starting
+point} of the algorithm.
+Subsequently, $\lambda$ is lowered (with possible
+intermittent increases) while ``tracing'' the equilibrium of
+the parameterized game, until $\lambda=0$ and an equilibrium
+of the given game is found.
+The result is a path of parameterized games and a 
+corresponding equilibrium for each game.
+For a bimatrix game $(A,B)$ and the methods considered here,
+the path is piecewise linear.
+Up to scaling, it consists of line segments in the set
+$X\times Y$ of mixed-strategy pairs, represented by the
+pivoting steps of Lemke's algorithm.
+
+For brevity, we first summarize the different methods and how to
+represent them with Lemke's algorithm, with details in the
+following subsections.
+We always assume negative payoff matrices $A$ and $B$ as in
+$(\ref{ABneg})$ and consider the LCP (\ref{lcp}) as
+in~$(\ref{lcpAB-})$ with $N=m+n+2$ and
+\begin{equation}
+\label{tlcp}
+z=\left[\begin{matrix}x\\y\\ u^-\\v^-
+\end{matrix}\right],\qquad
+q=\left[\begin{matrix}\0\\ \0\\  -1\\-1
+\end{matrix}\right],\qquad 
+M=\left[\begin{matrix}
+&-A&\1\\
+-B\T&&&-\1\\
+\1\T &\\
+&\1\T\\
+\end{matrix}\right].
+\end{equation}
+In the augmented LCP (\ref{lcp0}), the covering vector $d$
+is chosen according to the different methods.
+\bullitem
+The \textit{global Newton method}, with subsidy vectors
+$a\in\reals^m$ and $b\in\reals^n$ for the rows and columns,
+traces equilibria of 
+\begin{equation}
+\label{ABl}
+\Gamma_\lambda=(A + a\lambda\1\T, ~B+\1\lambda b\T)\,.
+\end{equation}
+This is represented in Lemke's algorithm with
+\begin{equation}
+\label{gnm}
+d=\left[\begin{matrix} \1\alpha-a\\ \1\beta-b\\1\\1\\
+\end{matrix}\right]
+,\qquad 
+z_0=\frac{\lambda}{1+\lambda}=\frac{1}{1/\lambda+1}
+,\qquad 
+\lambda = \frac{z_0}{1-z_0}
+\end{equation}
+with sufficiently large constants $\alpha$ and $\beta$ such
+that $\1\alpha-a$ and $\1\beta-b$ are positive.
+The parameters $\lambda\in[0,\infty]$ and $z_0\in[0,1]$ are
+in a monotonic bijection via~(\ref{gnm}).
+
+\bullitem
+The \textit{Lemke-Howson (LH)} method uses a \textit{missing
+label} $k$ in $\{1,\ldots,m+n\}$ for a row or column
+strategy that is is subsidized. 
+This is represented with $d\in\reals^N$ defined by
+\begin{equation}
+\label{LHd}
+d_i=1\quad
+(1\le i\le N,~i\ne k),\qquad
+d_k=0\,.
+\end{equation}
+This has some disadvantages compared to the standard
+implementation of the LH method, as will be discussed, but
+maps nicely to Lemke's algorithm.
+
+\bullitem
+The \textit{tracing procedure} by van den Elzen and Talman
+uses a \textit{prior} or starting point $(\bar x,\bar y)\in
+X\times Y$.
+It traces equilibria $(\hat x,\hat y)$ of a game where the
+players play with weight (or probability) $\tau\in[0,1]$
+against the prior and with weight $1-\tau$ against their
+actual strategies $(\hat x,\hat y)$, starting with $\tau=1$
+and ending with $\tau=0$.
+This is represented with 
+\begin{equation}
+\label{ET}
+d=\left[\begin{matrix}-A\bar y\\ -B\T\bar x \\ \1\\ \1
+\end{matrix}\right],\qquad 
+z_0=\tau,
+\qquad
+x=\hat x(1-z_0),
+\quad
+y=\hat y(1-z_0)
+\end{equation}
+with $z=(x,y,u^-,v^-)\T$ as in (\ref{tlcp}).
+
+We now consider these methods in detail.
+
+\subsection{The global Newton method}
+\label{s-gnm}
+
+The global Newton method \citep{GW03} works for any finite
+game in strategic form, but we consider it here for two
+players for an $m\times n$ bimatrix game $(A,B)$.
+Let $a\in\reals^m$ and $b\in\reals^n$ where $a_i$ and $b_j$
+are considered a ``subsidy'' (or penalty if negative) for
+row $i$ and column $j$, respectively.
+These subsidies are scaled simultaneously with $\lambda$ and
+added to each respective row and column, which defines the
+parameterized game (\ref{ABl}).
+
+If $a$ and $b$ have a unique maximum $a_i$ and $b_j$, say,
+then for sufficiently large $\lambda$ the game
+$\Gamma_\lambda$ will have the pure-strategy pair $(i,j)$ as
+its unique equilibrium as the starting point.
+Lowering $\lambda$ will then either lead to $\lambda=0$ and
+having that same equilibrium as an equilibrium of $(A,B)$,
+or for some $\bar\lambda>0$ give a new pure strategy $k$ of
+either player as a new best response.
+At that point, the game $\Gamma_{\bar\lambda}$ is
+necessarily degenerate, but has generically only a line segment,
+at this initial step some convex combinations of $i$ and $k$
+(if $k$ belongs to the row player), as an equilibrium
+component.
+Traversing that equilibrium component in
+$\Gamma_{\bar\lambda}$ then may either lead to a new best
+response, or dropping a previous best response (like~$i$),
+which allows to change $\lambda$ again (normally a decrease,
+but possibly also an increase of $\lambda$).
+
+Generically, the encountered equilibrium components are
+one-dimensional, and no bifurcation occurs;
+when implemented with Lemke's algorithm, lexicographic
+degeneracy resolution creates a unique path, even if the
+maximum entries of $a$ and~$b$ are not unique.
+The computed path consists of games~$\Gamma_\lambda$, each
+with an associated unique equilibrium, which in case of
+intermittent increases of~$\lambda$ depends on the path
+history.
+The path terminates with $\lambda=0$ because for
+large~$\lambda$ the game $\Gamma_\lambda$ has a unique
+equilibrium, so the path cannot continue with $\lambda$
+becoming infinite (which would be a secondary ray in Lemke's
+algorithm).
+
+We now explain (\ref{gnm}).
+The constants $\alpha$ and $\beta$ are just added to all
+entries of $A$ and~$B$, respectively, and do not change best
+responses.
+For the game $\Gamma_\lambda$ in (\ref{ABl}), the
+conditions for an equilibrium $(x,y)$ state
+\begin{equation}
+\label{Geq}
+\arraycolsep.2em
+\begin{array}{rcrrllrrr}
+x\ge\0&\quad\bot\quad&
+&-Ay
+&
+{}-\1u^-
+&&{}-a\lambda\ge&\0
+\\
+y\ge\0&\quad\bot\quad&
+-B\T x&&
+&{}-\1v^-
+&{}-b\lambda\ge&\0&
+\\
+u^-\ge0&\quad\bot\quad&
+\1\T x&&&&\ge&1
+\\
+v^-\ge0&\quad\bot\quad&
+&\1\T y&&&\ge&1&.
+\end{array}
+\end{equation}
+Assuming that sufficiently large constants $\1\alpha$ and
+$\1\beta$ are added to $-a$ and $-b$, this would work with
+Lemke's algorithm with $z_0=\lambda$ and
+$d=(\1\alpha-a,\1\beta-b,0,0)\T$ if $u^-$ and $v^-$
+could be pivoted into the basis before $z_0$.
+However, this is not a standard initialization where $z_0$
+enters first, which requires condition (\ref{d}) to hold,
+which fails here because $q=(\0,\0,-1,-1)\T$.
+Instead, we divide all $m+n$ inequalities in
+(\ref{Geq}) by $1+\lambda$, which is always positive,
+and let 
+\begin{equation}
+\label{hatxy}
+\textstyle
+\hat x= x\frac1{1+\lambda},\quad 
+\hat y= y\frac1{1+\lambda},\quad 
+\hat u= {u^-}\frac1{1+\lambda},\quad 
+\hat v= {v^-}\frac1{1+\lambda},\quad 
+\tau= \frac\lambda{1+\lambda},\quad
+1-\tau= \frac1{1+\lambda},
+\end{equation}
+so that $\1x\ge1$ becomes $\1\hat x\ge1-\tau$ and 
+$\1y\ge1$ becomes $\1\hat y\ge1-\tau$, and (\ref{Geq}) 
+becomes
+\begin{equation}
+\label{Geqnew}
+\arraycolsep.2em
+\begin{array}{rcrrllrrrr}
+\hat x\ge\0&\quad\bot\quad&
+&-A\hat y
+&
+{}-\1\hat u
+&&{}-&a\tau\ge&\0
+\\
+\hat y\ge\0&\quad\bot\quad&
+-B\T\hat x&&
+&{}-\1\hat v
+&{}-&b\tau\ge&\0&
+\\
+\hat u\ge0&\quad\bot\quad&
+\1\T\hat  x&&&&+&\tau\ge&1
+\\
+\hat v\ge0&\quad\bot\quad&
+&\1\T \hat y&&&+&\tau\ge&1&.
+\end{array}
+\end{equation}
+With $-a$ replaced by $\1\alpha-a$,
+and $-b$ replaced by $\1\beta-b$,
+and $z_0=\tau$, this is the system (\ref{gnm}) apart
+from the naming of the variables $\hat x,\hat y,\hat u,\hat v$,
+with the standard initialization of Lemke's algorithm.
+The variable $z_0$ enters the basis with value $z_0=1$, which
+corresponds to $\lambda=\infty$.
+The resulting basis is degenerate, and lexicographic
+perturbation implies that $\hat v$ enters the basis next,
+and $\hat u$ also has to enter before $z_0$ can be reduced.
+However, the resulting path is unique and cannot terminate
+with $z_0=1$ (or $\lambda=\infty$) because this would mean
+an alternative way to start (a secondary ray is different
+from the primary ray). 
+
+During the initialization phase when $z_0=1$, we have
+$\hat x=\0$ and $\hat y=\0$, but during the main computation
+when $z_0<1$, the pair $(\hat x,\hat y)$ multiplied by
+$\frac1{1-z_0}$ (that is, by $1+\lambda$) is the equilibrium
+of the parameterized game $\Gamma_\lambda$.
+When $z_0=0$ and the algorithm terminates, then $(\hat
+x,\hat y)$ is an (unscaled) mixed equilibrium of the
+original game $\Gamma_0$.
+
+\subsection{The Lemke-Howson algorithm}
+\label{s-lh}
+
+% The Lemke-Howson algorithm \citep{LH}
+The algorithm by \citet{LH}
+has a nice visualization due to \cite{Shapley1974}
+(see also \citealp{vS22}, chapter~9).
+We number the $m+n$ pairs of inequalities in (\ref{NE}) with
+$1,\ldots,m$ for the $m$ pure strategies of the row player,
+and with $m+1,\ldots,m+n$ for the $n$ pure strategies of the
+column player. 
+Each number in $\{1,\ldots,m+n\}$ is called a
+\textit{label}, and any $(x,y,u,v)$ in
+$X\times Y\times\reals\times\reals$ is said
+to have label $k$ if one of the corresponding inequalities
+is tight; we also say $(x,y)$ has such a label if that is
+the case for suitable $u$ and $v$. 
+That is, $(x,y)$ has label $i$ in $\{1,\ldots,m\}$ if
+$x_i=0$ or $(Ay)_i=u$, assuming $Ay\le\1u$, and has
+label~$j$ in $\{m+1,\ldots,m+n\}$ if $y_j=0$ or
+$(B\T x)_j=v$, assuming $B\T x\le\1v$.
+In other words, $(x,y)$ has a pure strategy of either player
+as a label if that pure strategy is played with probability
+zero or is a best response.
+An equilibrium $(x,y)$ is characterized by having all labels
+$1,\ldots,m+n$.
+
+The Lemke-Howson algorithm generalizes the equilibrium
+condition by allowing one label, say~$k$, to be
+\textit{missing}, and considers all $(x,y,u,v)$
+in $X\times Y\times\reals\times\reals$
+such that $Ay\le\1u$ and $B\T x\le\1v$
+that have at least the labels in $\{1,\ldots,m+n\}-\{k\}$.
+These tuples are called \textit{$k$-almost complementary},
+and for a nondegenerate game define a collection of line
+segments and one ray that form a set of paths and cycles.
+The endpoints of the paths are the equilibria of $(A,B)$.
+The ray is given by the pure strategy $k$ and its (pure)
+best response, where in the system (\ref{NE}) the
+constraints $Ay\le\1u$ for the payoff
+variable $u$ if $k\in\{1,\ldots,m\}$, or the constraints
+$B\T x\le\1v$ for the payoff variable~$v$ if
+$k\in\{m+1,\ldots,m+n\}$, need not be tight
+% in the system $Ay\le\1u$ (respectively, $B\T x\le\1v$)
+because $k$ is not required to be a best response.
+This works for the initial solutions given by the ray
+because $k$ is the only pure strategy of the respective
+player that has positive probability, and the other player
+uses the (generically unique) pure best response to~$k$;
+hence, all labels except $k$ are present.
+
+The Lemke-Howson algorithm is a special case of the global
+Newton method by setting the pair $(a,b)$ of ``subsidies''
+in (\ref{ABl}) to be equal to the $k$th unit vector $e_k$ in
+$\reals^{m+n}$ (that is, the $k$th component of $e_k$ is~1
+and all other components are~0).
+That way, the pure strategy $k$ is ``subsidized'' via
+$\lambda$ so that it is a best response in $\Gamma_\lambda$
+(and all other pure strategies are in equilibrium) but not
+in the original game $(A,B)$. 
+The algorithm ends with $\lambda=0$ because either $k$ has
+probability zero or becomes a best response in $\Gamma_0$,
+that is, in $(A,B)$.
+
+With $(a,b)$ as the unit vector $e_k$ for the missing
+label~$k$, we can choose $\alpha=\beta=1$ in (\ref{gnm}),
+which gives (\ref{LHd}).
+When running Lemke's algorithm this way, it indeed emulates
+the LH method, where during the LCP computation the LCP
+variables $x$ and $y$ in (\ref{tlcp}) have their components
+sum to $1-z_0$ and need to be re-scaled to represent the
+steps of the LH algorithm.
+This is not possible in an initial phase where $z_0=1$ (and
+thus $x=\0$ and $y=\0$, even though some components of $x$
+and $y$ may already be basic.
+This initial phase requires a lot (typically $m+n$)
+degenerate pivots because the vector $d$ together with the
+column entries for $u^-$ and~$v^-$ generates a large number
+of basic variables with value zero.
+As long as these are potential leaving variables, these need
+to be pivoted out before $z_0$ can shrink in value.
+
+A standard implementation of the LH algorithm uses
+two best-response polytopes $P=\{x\in\reals^m\mid
+x\ge\0,~B\T x\le\1\}$ and $Q=\{y\in\reals^n\mid Ay\le
+\1,~y\ge\0\}$ with positive payoff matrices $A$ and $B$ (see
+\citealp{vS22}, section 9.6f), with $(\0,\0)$ as an initial
+``artificial'' equilibrium that is completely labeled.
+Then pivoting alternates between two disjoint systems, one
+for $x$ and one for $y$, which means that the LCP tableau is
+always only half full.
+In the implementation described here, the tableau is during
+the intermittent computations three-quarters full.
+It has, however, the advantage that only the LCP parameters
+for the standard algorithm by Lemke have to be adapted, not
+the algorithm itself. 
+
+\subsection{The van den Elzen-Talman linear tracing procedure}
+\label{s-et}
+
+The algorithm by \citet{vdET99}
+is another path-following method of ``tracing'' equilibria
+in a certain restricted game, which is defined via a
+``prior'' or starting point $(\bar x,\bar y)$ in the
+mixed-strategy space $X\times Y$.
+For $\tau\in[0,1]$, consider the restricted set of strategy
+profiles
+\begin{equation}
+\label{Stau}
+\arraycolsep.2em
+\begin{array}{rcl}
+S(\bar x,\bar y,\tau)
+&=&\{\, (x,y)\in X\times Y\mid
+x\ge\bar x\tau,~y\ge\bar y\tau\} 
+\\
+&=&\{\,(\hat x+\bar x\tau,\hat y+\bar y\tau)\mid
+\1\T \hat x=1-\tau,~ \hat x\ge\0,~\1\T \hat y=1-\tau,~ \hat y\ge\0 \}
+\\
+&=&\{\, (\tilde x(1-\tau)+\bar x\tau,\tilde y(1-\tau)+\bar y\tau)\mid
+(\tilde x,\tilde y)\in X\times Y\}
+\,.
+\end{array}
+\end{equation}
+For $(x,y)$ in the set $S(\bar x,\bar y,\tau)$,
+every mixed-strategy probability $x_i$ or
+$y_j$ has to be at least $\bar x_i$ or $\bar y_j$,
+respectively. 
+For $\tau=1$, clearly $S(\bar x,\bar y,1)=\{(\bar x,\bar y)\}$.
+In the second equation in (\ref{Stau}),
+$\hat x=x-\bar x\tau$ and $\hat y=y-\bar y\tau$
+(we will use $\hat x$ and $\hat y$ as LCP variables), and in
+the last equation of (\ref{Stau}) the mixed strategies
+$\tilde x$ and $\tilde y$ are arbitrary for $\tau=1$ and
+uniquely defined by $\tilde x=x\frac1{1-\tau}$
+and $\tilde y=y\frac1{1-\tau}$ if $0\le \tau<1$.
+
+The ``linear tracing procedure'' of \citet{vdET99}
+follows a path of equilibria $(x, y)$
+restricted to the strategy set $S(\bar x, \bar y, \tau)$,
+parameterized by~$\tau$.
+It starts with $\tau=1$ at the prior $(\bar x,\bar y)$,
+which generically has a pair $(\tilde x,\tilde y)$ of pure best
+responses.
+The corresponding convex combination 
+$(\tilde x(1-\tau)+\bar x\tau,\tilde y(1-\tau)+\bar y\tau)$
+stays a best response against itself (i.e., is an
+equilibrium) for $\tau$ slightly less than~1.
+Subsequent lowering of $\tau$ either stops at $\tau=0$ or
+for some $\bar\tau$ introduces a new best response
+of some player which is then increased, with $\tau$ staying
+fixed, until $\tau$ can be changed again.
+Throughout, the path as represented in (\ref{Stau}) stays
+inside the strategy space $(X,Y)$, and (in the generic case)
+will not bifurcate or return to $(\bar x,\bar y)$ but will
+eventually terminate at $\tau=0$ with an equilibrium of the
+original game $(A,B)$. 
+
+The interpretation of the linear tracing procedure is that
+the prior represents a preconception of the players of what
+their opponent will do.
+The players reply first (for $\tau=1$) only to that
+preconception, and then gradually, with weight $1-\tau$,
+take their actual play $(\tilde x,\tilde y)$ into account, by
+reacting to the respective convex combination with the
+prior which has weight~$\tau$, adjusting their actions until
+$\tau=0$.
+Possible intermittent increases of $\tau$ in this adjustment
+process are possible.
+
+\citet{balthasar2010} has shown, and it is easy to see, that
+the path of the linear tracing procedure for $0\le\tau<1$ is
+in one-to-one correspondence with the path for the global
+Newton method via
+\begin{equation}
+\label{Ntra}
+\lambda=\frac{\tau}{1-\tau}=\frac1{1/\tau-1},\qquad
+(a,b)=(A\bar y, B\T \bar x)
+\end{equation}
+in (\ref{ABl}), where $\lambda\in[0,\infty)$ and
+$\tau\in[0,1)$ are strictly monotonic functions of each
+other.
+The starting point $(\bar x,\bar y)$ of the linear tracing
+procedure corresponds to the ray of equilibria of
+$\Gamma_\lambda$ when $\lambda\to\infty$ as $\tau\to1$.
+We have used exactly this transformation in (\ref{hatxy}) to
+use the parameter $\tau$ instead of $\lambda$ for the global
+Newton method.
+
+\citet{balthasar2010} has also shown that there are open
+sets of games where an equilibrium of positive index is
+\textit{not} found via the linear tracing procedure.
+For example, the symmetric $3\times 3$ game $(A,B)$
+\begin{equation}
+\label{33}
+A=B\T=\left[\,\begin{matrix}
+~~0 & -1 & -c\\
+-c & ~~0 & -1\\
+-1 & -c & ~~0\\
+\end{matrix}\,\right] 
+\end{equation}
+has a completely mixed equilibrium, which has positive
+index, which for $1<c<2$ is not found for any generic prior
+$(\bar x,\bar y)$.
+Condition (\ref{Ntra}) shows that the global Newton method
+has more general parameters $(a,b)$ than the linear tracing
+procedure.
+% even if both $A$ and $B\T$ have full rank (which
+% requires $m=n$), as in (\ref{33}), for any~$a$ there is a
+% solution $\bar y\in Y$ so that $a=A\bar y$ up to a scaling
+% factor, but for an arbitrary $b$ the equation $b=B\T\bar x$
+% may require a different scalar factor so that $\bar x\in X$.
+For example, via $\lambda$ in (\ref{ABl}) the strategies of
+the two players may vary by different ``speeds'' of change
+for a given direction $(a,b)$, which cannot be emulated by a
+suitable prior $(\bar x,\bar y)$.
+It is open whether the completely mixed equilibrium in
+(\ref{33}) (or in general any equilibrium of positive index)
+can be found with the global Newton method.
+
+Clearly, the linear tracing procedure is implemented via 
+Lemke's algorithm by (\ref{ET}), using $a=A\bar y$ and
+$b=B\T\bar x$ in (\ref{Geqnew}).
+It would be of interest if it can serve as a good substitute
+for an evolutionary dynamics (like the replicator dynamics).
+One first question in this direction is whether the
+completely mixed equilibrium of the game in (\ref{33}) is
+dynamically stable in an evolutionary setting.
+
+\section{Random starting points}
+
+One way of using the linear tracing procedure is for
+equilibrium selection.
+We propose to choose starting vectors $(\bar x,\bar y)$
+where $\bar x$ and $\bar y$ are each chosen from a uniform
+distribution on their respective mixed-strategy simplices.
+The corresponding percentages of which equilibrium is found
+is then an indication of the ``prevalence'' of this
+equilibrium, in particular a ``practical'' uniqueness if
+the found equilibrium is always the same.
+
+[Details on implementation.]
+
+% \cite{vS2010}
+
+\small
+\bibliographystyle{book}
+\bibliography{bib-evol} 
+
+\end{document}
+
