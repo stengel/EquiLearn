@@ -5,7 +5,6 @@ from enum import Enum
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
-import sys # Not used?
 import numpy as np # numerical python
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
@@ -172,7 +171,7 @@ class Model(DemandPotentialGame):
         super().__init__( totalDemand,tupleCosts,totalStages)
 
         self.rewardFunction = self.profits
-        self.initState = [0, totalDemand/2, ((totalDemand/2) + tupleCosts[0])/2] 
+        self.initState = [0, totalDemand/2] 
         self.episodesMemory = list()
         self.done = False
         self.adversaryProbs=adversaryProbs
@@ -239,9 +238,9 @@ class Model(DemandPotentialGame):
 
         done= (self.stage == self.T-1)
         if not done:
-            newState = [self.stage ,self.demandPotential[1][self.stage + 1], self.prices[1][self.stage] ] 
+            newState = [self.stage ,self.demandPotential[1][self.stage + 1]] #Should be 0
         else:
-            newState=[self.stage ,0, self.prices[1][self.stage] ] 
+            newState=[self.stage ,0] 
        
         reward = self.rewardFunction()
         self.stage = self.stage + 1

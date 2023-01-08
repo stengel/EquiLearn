@@ -4,10 +4,8 @@
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
-import sys
 import numpy as np # numerical python
 import pandas as pd
-from matplotlib import pyplot as plt
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
 
@@ -54,15 +52,14 @@ class ReinforceAlgorithm(Solver):
             self.resetPolicyNet()
             
             for episode in range(self.numberEpisodes):
-                if episode % 50000 == 0:
+                if episode % 5000 == 0:
                     print(episode)
                 episodeMemory = list()
                 state, reward, done = self.env.reset()
                 
-                normState = torch.tensor([  0.0000, 0.0000, 0.0000])
+                normState = torch.tensor([  0.0000, 0.0000])
                 normState[0] = state[0]/25
-                normState[1] = state[1]/400
-                normState[2] = state[2]/400                 
+                normState[1] = state[1]/400               
                 retu = 0
                 
                 while not done:
@@ -75,10 +72,10 @@ class ReinforceAlgorithm(Solver):
                     
 
                     state, reward, done = self.env.step(prevState, action.item())
-                    normState = torch.tensor([  0.0000, 0.0000, 0.0000])
+                    # reward = reward / 1000000
+                    normState = torch.tensor([  0.0000, 0.0000])
                     normState[0] = state[0]/25
                     normState[1] = state[1]/400
-                    normState[2] = state[2]/400
                     retu = retu + reward
                     episodeMemory.append((normPrevState, action, reward))
 
