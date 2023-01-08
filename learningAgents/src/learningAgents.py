@@ -2,11 +2,8 @@
 # ReinforceAlgorithm Class: Solver.
 import environmentModel as em
 import torch
-import torch.nn as nn
 from torch.distributions import Categorical
-import sys
 import numpy as np  # numerical python
-import pandas as pd
 from matplotlib import pyplot as plt
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
@@ -77,16 +74,20 @@ class ReinforceAlgorithm(Solver):
                 episodeMemory = list()
                 state, reward, done = self.env.reset()
                 returns = 0
+                
+                if episode % 10_000 == 0:
+                    startState = self.normaliseState(state)
+                    probs = self.policy(startState)
+                    print(probs)
 
                 while not done:
                     prevState = state
-                    normPrevState = self.normalizeState(prevState)
+                    normPrevState = self.normaliseState(prevState)
                     probs = self.policy(normPrevState)
                     distAction = Categorical(probs)
                     action = distAction.sample()
 
-                    state, reward, done = self.env.step(
-                        prevState, action.item())
+                    state, reward, done = self.env.step(prevState, action.item())
                     returns = returns + reward
                     episodeMemory.append((normPrevState, action, reward))
 
@@ -103,20 +104,22 @@ class ReinforceAlgorithm(Solver):
                 action_logprobs = action_dists.log_prob(actions)
 
                 discReturns = self.returnsComputation(rewards, episodeMemory)
-
-                # is it a good idea? to get over the big weights in NN
-                discReturns/=1000
                 
+                # sum of the our player's rewards  rounds 0-25
+                self.returns[iteration][episode] = discReturns[0]
+                
+                if episode % 10_000 == 0:
+                    print(discReturns[0])
 
-                loss = - (torch.sum(discReturns*action_logprobs)) / \
-                    len(episodeMemory)
+                discReturns/= 1000
+                
+                loss = - (torch.sum(discReturns*action_logprobs)) / len(episodeMemory)
 
                 self.optim.zero_grad()
                 loss.backward()
                 self.optim.step()
 
-                # sum of the our player's rewards  rounds 0-25
-                self.returns[iteration][episode] = returns
+                
 
             # averageRetu = (
             #     (self.returns[iteration]).sum())/(self.numberEpisodes)
@@ -124,8 +127,6 @@ class ReinforceAlgorithm(Solver):
             #     self.bestPolicy = self.policy
             #     self.bestAverageRetu = averageRetu
 
-            plt.plot(self.returns[iteration])
-            plt.show()
 
     def returnsComputation(self, rewards, episodeMemory):
         """
@@ -133,12 +134,12 @@ class ReinforceAlgorithm(Solver):
         """
         return torch.tensor([torch.sum(rewards[i:] * (self.gamma ** torch.arange(0, (len(episodeMemory)-i)))) for i in range(len(episodeMemory))])
 
-    def normalizeState(self, state):
-        normalized = [0]*len(state)
-        normalized[0] = state[0]/(self.env.T)
+    def normaliseState(self, state):
+        normalised = [0]*len(state)
+        normalised[0] = state[0]/(self.env.T)
         for i in range(1, len(state)):
-            normalized[i] = state[i]/(self.env.totalDemand)
-        return torch.tensor(normalized)
+            normalised[i] = state[i]/(self.env.totalDemand)
+        return torch.tensor(normalised)
 
     def playTrainedAgent(self, advMode, iterNum):
         advProbs = torch.zeros(len(em.AdversaryModes))
@@ -155,7 +156,7 @@ class ReinforceAlgorithm(Solver):
 
             while not done:
                 prevState = state
-                normPrevState = self.normalizeState(prevState)
+                normPrevState = self.normaliseState(prevState)
                 probs = self.neuralNetwork(normPrevState)
                 distAction = Categorical(probs)
                 action = distAction.sample()

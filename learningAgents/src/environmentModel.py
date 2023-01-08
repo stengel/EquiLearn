@@ -172,7 +172,7 @@ class Model(DemandPotentialGame):
         The reason: Model is a conceptualization of the Game.
     """
 
-    def __init__(self, totalDemand, tupleCosts, totalStages, adversaryProbs, advHistoryNum=3) -> None:
+    def __init__(self, totalDemand, tupleCosts, totalStages, adversaryProbs, advHistoryNum) -> None:
         super().__init__(totalDemand, tupleCosts, totalStages)
 
         self.rewardFunction = self.profits
