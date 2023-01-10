@@ -63,15 +63,10 @@ class LearningAlgorithm():
             advAction = self.chooseAdver(state)
             reward = (state-action)*(action-self.env.costs[0])
 
-            #print(state,action,monprice)
-
             next_state = int(state+.5*(advAction-action))
 
-            #print(state, action, monprice, next_state)
-            #print(self.StateInd(state), self.ActionInd(monprice, action), monprice, self.StateInd(next_state))
-            #print(self.highestState)
-
             opt_value_next = max(self.Qtable[self.StateInd(next_state)])
+
 
             # updating the Qtable
             qvalue = (1-self.alpha_n(episode)) * \
@@ -79,5 +74,6 @@ class LearningAlgorithm():
                    + self.alpha_n(episode) * \
                    ((1-self.gamma)*reward + self.gamma*opt_value_next)
             self.Qtable[self.StateInd(state), self.ActionInd(monPrice, action)]=qvalue
+
 
 
