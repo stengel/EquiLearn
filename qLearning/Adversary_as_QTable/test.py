@@ -46,6 +46,16 @@ class Test():
             advAction = self.chooseAdversaryAction(state)
             state = int(state+.5*(advAction-action))
         return utility, np.transpose(actions)
+    
+    def bestResponses(self):
+        states = [0]* self.numStates
+        bestResponses = [0]* self.numStates
+        for i in range(self.numStates):
+            demand = int((200-self.numStates/2)) + i
+            states[i] = demand
+            action = np.argmax(self.Qtable[i]) + int((demand + self.env.costs[0])/2) - self.numActions + 1
+            bestResponses[i] = action
+        return states, bestResponses
 
     
     def error(self):
