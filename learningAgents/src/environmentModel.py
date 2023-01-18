@@ -58,7 +58,7 @@ class DemandPotentialGame():
             if self.stage < self.T-1 :
                 self.demandPotential[player][ self.stage + 1] = \
                     self.demandPotential[player][self.stage] + (pricePair[1-player] - price)/2
-
+                
 
     def monopolyPrice(self, player, t): # myopic monopoly price 
         """
@@ -234,16 +234,17 @@ class Model(DemandPotentialGame):
         - state: tupple in the latest stage (Demand Potential, Price)
         """
         adversaryAction = self.adversaryChoosePrice()
-        self.updatePricesProfitDemand( [self.myopic() - action, adversaryAction] )     
+        self.updatePricesProfitDemand( [self.myopic() - action, adversaryAction] ) 
 
         done= (self.stage == self.T-1)
         if not done:
-            newState = [self.stage ,self.demandPotential[1][self.stage + 1]] #Should be 0
+            newState = [self.stage + 1,self.demandPotential[0][self.stage + 1]] 
+            reward = self.rewardFunction()
         else:
-            newState=[self.stage ,0] 
-       
-        reward = self.rewardFunction()
-        self.stage = self.stage + 1
+            newState=[self.stage + 1,0]
+            reward = self.rewardFunction()
+        
+        self.stage = self.stage + 1  
         
         return torch.tensor(newState, dtype=torch.float32), reward, done
 
