@@ -116,6 +116,8 @@ class ReinforceAlgorithm(Solver):
                 y[batch] = totalReturn
                 if batch % 5000 == 0:
                     print(batch, loss.item(), totalReturn)
+                    plt.scatter(x[0:batch-1],y[0:batch-1])
+                    plt.show()
 
                 self.optim.zero_grad()
                 loss.backward()
