@@ -7,8 +7,9 @@ from torch.distributions import Categorical
 import numpy as np # numerical python
 import pandas as pd
 # printoptions: output limited to 2 digits after decimal point
-np.set_printoptions(precision=2, suppress=False)
+# np.set_printoptions(precision=2, suppress=False)
 import matplotlib.pyplot as plt
+
 
 
 
@@ -52,16 +53,16 @@ class ReinforceAlgorithm(Solver):
         
         for iteration in range(self.numberIterations):
             self.resetPolicyNet()
-            
-            x = [0]*self.numberBatches
-            y = [0]*self.numberBatches            
+                     
             
             for batch in range(self.numberBatches):
                 earlyExit = True
                 totalReturn = 0
                 batchStates = torch.empty(0)
                 batchActions = torch.empty(0)
+                batchProbs = list()
                 batchRewards = torch.empty(0)
+                
                 for episode in range(self.numberEpiPerBatch):
                     discount = 1 / self.delta                
                     episodeMemory = list()
@@ -71,7 +72,7 @@ class ReinforceAlgorithm(Solver):
                     normState[0] = state[0]/(self.env.T - 1)
                     normState[1] = 10 * (state[1]/(self.env.totalDemand)) - 5   
                     retu = 0
-
+                    period = 0
                 
                     while not done:
                         discount = discount * self.delta
@@ -79,60 +80,77 @@ class ReinforceAlgorithm(Solver):
                         normPrevState = normState  
                     
                         probs = self.policy(normPrevState)
+                        if batch > 10:
+                            if episode 
+                        if ((episode == 0) and (batch % 25 == 0)):
+                            if period == 0:
+                                print(batch)
+                            if period % 4 == 0:
+                                print(probs)
                         if probs.max() < 0.95:
                             earlyExit = False
-                        if ((episode == self.numberEpiPerBatch - 1) and (batch % 5000 == 0)):
-                                print(probs)
                         distAction = Categorical(probs)
                         action = distAction.sample()
+                        batchProbs.append(probs[action])
                         state, reward, done = self.env.step(prevState, action.item())
                         reward = reward * discount
+                        retu += reward
+                        reward -= 5500
+                        reward /= 1000
                         normState = torch.tensor([  0.0000, 0.0000])
                         normState[0] = state[0]/(self.env.T - 1)
                         normState[1] = 10 * (state[1]/(self.env.totalDemand)) - 5
-                        retu = retu + reward
-                        episodeMemory.append((normPrevState, action, 0))
+                        episodeMemory.append((normPrevState, action, reward))
+                        period += 1
+
                    
-                        
-                    retu -= 5500*len(episodeMemory)
-                    retu /= 500
+                    
                     states = torch.stack([item[0] for item in episodeMemory])
                     actions = torch.tensor([item[1] for item in episodeMemory])
-                    rewards = torch.tensor([retu]*len(episodeMemory))
-                    rewards = self.discount_rewards(rewards, self.gamma)
+                    rewards = torch.tensor([item[2] for item in episodeMemory])
+                    futureRewards = self.future_rewards(rewards, self.gamma)
                     batchStates = torch.cat((batchStates,states),0)
                     batchActions = torch.cat((batchActions,actions),0)
-                    batchRewards = torch.cat((batchRewards,rewards),0)
+                    batchRewards = torch.cat((batchRewards,futureRewards),0)
                     totalReturn += retu 
-                    
                 
+                    
                 if earlyExit:
+                    print(actions)
                     print(batch)
-                    break
-                action_probs = self.policy(batchStates) 
-                prob_batch = action_probs.gather(dim=1,index=batchActions.long().view(-1,1)).squeeze()
-                loss = -1 * torch.sum(batchRewards * torch.log(prob_batch))
-                x[batch] = loss.item()
-                y[batch] = totalReturn
-                if batch % 5000 == 0:
-                    print(batch, loss.item(), totalReturn)
-                    plt.scatter(x[0:batch-1],y[0:batch-1])
-                    plt.show()
-
+                    break  
+                    
+                action_probs = torch.stack(batchProbs)
+                loss = -1 * (batchRewards * torch.log(action_probs)).mean()
+                
                 self.optim.zero_grad()
                 loss.backward()
                 self.optim.step()
 
+                
+
                 self.returns[iteration][batch] = totalReturn #sum of the our player's rewards  rounds 0-25 
 
-            plt.scatter(x,y)
-            plt.show()
-                
-    
-    def discount_rewards(self, rewards, gamma):
+
+    def future_rewards(self,rewards, gamma):
         lenr = len(rewards)
-        disc_return = torch.pow(gamma,torch.arange(lenr).float()) * rewards
+        futureRewards = torch.Tensor([0]*(lenr))
+        total = 0
+        for i in range(lenr):
+            futureRewards[lenr - i - 1] = rewards[lenr - i - 1] + gamma * total
+            total = futureRewards[lenr - i - 1]
+#         futureRewards -= futureRewards.mean()
+#         futureRewards /= futureRewards.max()
+#         futureRewards /= futureRewards.std().clamp_min(1e-12)
+        return futureRewards
+    
+    def discount_total_rewards(self,rewards,gamma):
+        lenr = len(rewards)
+        total = torch.sum(rewards)
+        futureRewards = torch.Tensor([total]*(lenr))
+        disc_return = torch.pow(gamma,torch.arange(lenr).float()) * futureRewards
         return disc_return
+    
 
 
     
