@@ -50,10 +50,16 @@ class ReinforceAlgorithm(Solver):
         """
             Method that performs Monte Carlo Policy Gradient algorithm. 
         """ 
+        bestActions = [0] * self.env.T
+        bestPayoff = 0
+        finalActions = [0] * self.env.T
+        finalPayoff = 0
+        convergence = 1
         
         for iteration in range(self.numberIterations):
             self.resetPolicyNet()
-                     
+            returns = list()
+            losses = list()         
             
             for batch in range(self.numberBatches):
                 earlyExit = True
@@ -66,10 +72,11 @@ class ReinforceAlgorithm(Solver):
                 for episode in range(self.numberEpiPerBatch):
                     discount = 1 / self.delta                
                     episodeMemory = list()
+                    probMemory = list()
                     state, reward, done = self.env.reset()
                 
                     normState = torch.tensor([  0.0000, 0.0000])
-                    normState[0] = state[0]/(self.env.T - 1)
+                    normState[0] = 2 * (state[0]/(self.env.T - 1)) - 1
                     normState[1] = 10 * (state[1]/(self.env.totalDemand)) - 5   
                     retu = 0
                     period = 0
@@ -80,9 +87,7 @@ class ReinforceAlgorithm(Solver):
                         normPrevState = normState  
                     
                         probs = self.policy(normPrevState)
-                        if batch > 10:
-                            if episode 
-                        if ((episode == 0) and (batch % 25 == 0)):
+                        if ((episode == 0) and (batch % 10 == 0)):
                             if period == 0:
                                 print(batch)
                             if period % 4 == 0:
@@ -91,33 +96,46 @@ class ReinforceAlgorithm(Solver):
                             earlyExit = False
                         distAction = Categorical(probs)
                         action = distAction.sample()
-                        batchProbs.append(probs[action])
+                        probMemory.append(probs[action])
                         state, reward, done = self.env.step(prevState, action.item())
                         reward = reward * discount
                         retu += reward
                         reward -= 5500
                         reward /= 1000
                         normState = torch.tensor([  0.0000, 0.0000])
-                        normState[0] = state[0]/(self.env.T - 1)
+                        normState[0] = 2 * (state[0]/(self.env.T - 1)) - 1
                         normState[1] = 10 * (state[1]/(self.env.totalDemand)) - 5
                         episodeMemory.append((normPrevState, action, reward))
                         period += 1
+                        
 
                    
                     
                     states = torch.stack([item[0] for item in episodeMemory])
                     actions = torch.tensor([item[1] for item in episodeMemory])
                     rewards = torch.tensor([item[2] for item in episodeMemory])
-                    futureRewards = self.future_rewards(rewards, self.gamma)
+                    futureRewards = self.discount_total_rewards(rewards, self.gamma)
                     batchStates = torch.cat((batchStates,states),0)
                     batchActions = torch.cat((batchActions,actions),0)
+                    batchProbs += probMemory
                     batchRewards = torch.cat((batchRewards,futureRewards),0)
+                    if (batch == self.numberBatches - 1) and (episode == self.numberEpiPerBatch - 1):
+                        finalActions = actions.numpy()
+                        finalPayoff = retu
+                        for prob in probMemory:
+                            convergence *= prob.item()
+                    if retu > bestPayoff:
+                        bestActions = actions.numpy()
+                        bestPayoff = retu
                     totalReturn += retu 
                 
                     
                 if earlyExit:
-                    print(actions)
                     print(batch)
+                    finalActions = actions.numpy()
+                    finalPayoff = retu
+                    for item in probMemory:
+                        convergence *= item.item()
                     break  
                     
                 action_probs = torch.stack(batchProbs)
@@ -128,8 +146,20 @@ class ReinforceAlgorithm(Solver):
                 self.optim.step()
 
                 
-
+                losses.append(loss.item())
+                totalReturn /= self.numberEpiPerBatch
+                returns.append(totalReturn)
+                if batch % 50 == 0 and batch > 0:
+                    plt.plot(losses)
+                    plt.show()
+                    plt.plot(returns)
+                    plt.show()
                 self.returns[iteration][batch] = totalReturn #sum of the our player's rewards  rounds 0-25 
+            plt.scatter(losses,returns)
+            plt.show()
+            plt.plot(losses)
+            plt.show()
+            return self.returns, finalActions, finalPayoff, convergence, bestActions, bestPayoff
 
 
     def future_rewards(self,rewards, gamma):
@@ -147,8 +177,11 @@ class ReinforceAlgorithm(Solver):
     def discount_total_rewards(self,rewards,gamma):
         lenr = len(rewards)
         total = torch.sum(rewards)
+        total -= 35
+        total /= 10
         futureRewards = torch.Tensor([total]*(lenr))
         disc_return = torch.pow(gamma,torch.arange(lenr).float()) * futureRewards
+        disc_return = torch.flip(disc_return, [0])
         return disc_return
     
 
