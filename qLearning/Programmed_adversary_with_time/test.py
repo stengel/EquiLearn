@@ -18,7 +18,6 @@ class Test():
         self.numActions=Qtable.num_Actions
         self.numStages=Qtable.num_Stages
         self.discountFactor = discountFactor  
-        self.episodeLength = Model.T
         self.adversaryProbs = adversaryProbs
         self.adversary = None
         
@@ -51,30 +50,31 @@ class Test():
         delta = 1/self.discountFactor
         utility = 0
         advUtility = 0
-        actions = [0]*self.episodeLength
-        advActions = [0]*self.episodeLength
-        demands = [0]*self.episodeLength
+        actions = [0]*self.numStages
+        advActions = [0]*self.numStages
+        demands = [0]*self.numStages
         stateVector, reward, done = self.env.reset()
         demand = stateVector[1]
         
-        for i in range(self.episodeLength):
+        for stage in range(self.numStages):
             delta = delta * self.discountFactor
-            demands[i] = demand
+            demands[stage] = demand
             if (int(demand -(200-self.numStates/2)) > len(self.Qtable) -1):
                 print("max action reached")
                 demand = int((200-self.numStates/2) + len(self.Qtable) -1)
             if (int(demand -(200-self.numStates/2)) < 0):
                 print("min action reached")
                 demand = int((200-self.numStates/2))
-            row = self.Qtable[int(demand -(200-self.numStates/2))]
-            action = np.argmax(row) + int((demand + self.env.costs[0])/2) - self.numActions + 1
-            actions[i] = action
+            demand_index = int(demand -(200-self.numStates/2))
+            action_index = np.argmax(self.Qtable[demand_index, :, stage])
+            action = action_index + int((demand + self.env.costs[0])/2) - self.numActions + 1
+            actions[stage] = action
             utility += (demand-action)*(action-self.env.costs[0]) * delta
             advDemand = 400 - demand
             stateVector, reward, done = self.env.step(stateVector, action)
             demand = stateVector[1]
-            advActions[i] = stateVector[2]
-            advUtility += (advDemand-advActions[i])*(advActions[i]-self.env.costs[1]) * delta
+            advActions[stage] = stateVector[2]
+            advUtility += (advDemand-advActions[stage])*(advActions[stage]-self.env.costs[1]) * delta
         return utility, advUtility, np.transpose(actions), np.transpose(advActions), np.transpose(demands)
 
     
@@ -98,7 +98,10 @@ class Test():
                     else:
                         opt_value_next = max(self.Qtable[next_state_index, : , stage+1])
                     new_value = (1-self.discountFactor)*reward + self.discountFactor * opt_value_next
-                    Qtable_error[stateIndex,actionIndex, stage] = (new_value - self.Qtable[stateIndex,actionIndex, stage])/new_value
+                    if new_value != 0:
+                        Qtable_error[stateIndex,actionIndex, stage] = (new_value - self.Qtable[stateIndex,actionIndex, stage])/new_value
+                    if new_value == 0 and self.Qtable[stateIndex,actionIndex, stage] != 0:
+                        print("Div by zero error") # This should not occur
         return Qtable_error
     
     
@@ -122,7 +125,7 @@ class Test():
         opponentDemand = 200
         totalPayoff = 0
         delta = 1/self.discountFactor
-        for i in range(self.episodeLength):
+        for i in range(self.numStages):
             delta = delta * self.discountFactor
             agentPrice = int(actions[i])
             opponentPrice = int(self.myopic(self.env.costs[1],opponentDemand))
