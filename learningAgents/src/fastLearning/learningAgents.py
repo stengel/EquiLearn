@@ -42,7 +42,7 @@ class ReinforceAlgorithm(Solver):
         self.policy, self.optim = self.neuralNetwork.reset()
     
     def normalise_state(self, state):
-        return torch.tensor([20 * (state[0]/(self.env.T - 1)) - 1, \
+        return torch.tensor([2 * (state[0]/(self.env.T - 1)) - 1, \
                              10 * (state[1]/(self.env.totalDemand)) - 5])
     
     
