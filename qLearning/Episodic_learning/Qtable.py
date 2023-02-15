@@ -7,24 +7,24 @@ import numpy as np
 class QTable():
     
 
-    def __init__(self, num_States, num_Actions, num_Stages, learning_Rate):
+    def __init__(self, number_states, number_actions, number_stages, learning_rate):
     
-        self.num_States= num_States
-        self.num_Actions = num_Actions
-        self.num_Stages = num_Stages
-        self.learning_Rate = learning_Rate
-        self.Q_table = np.zeros((self.num_States, self.num_Actions, self.num_Stages))
-        self.QTable_name=f"QTable, actions={self.num_Actions}, states={self.num_States}, stages={self.num_Stages}"
+        self.number_states= number_states
+        self.number_actions = number_actions
+        self.number_stages = number_stages
+        self.learning_rate = learning_rate
+        self.Q_table = np.zeros((self.number_states, self.number_actions, self.number_stages))
+        self.QTable_name=f"QTable, actions={self.number_actions}, states={self.number_states}, stages={self.number_stages}"
         
 
     def reset(self):
-        Qtable = np.zeros((self.num_States, self.num_Actions, self.num_Stages))
+        Qtable = np.zeros((self.number_states, self.number_actions, self.number_stages))
         return Qtable, self.learning_rate
     
     
-    def randomReset(self):
-        randQtable = np.random.rand(self.num_States,self.num_Actions, self.num_Stages)
-        return randQtable, self.learning_rate
+    def random_reset(self):
+        random_Qtable = np.random.rand(self.number_states,self.number_actions, self.number_stages)
+        return random_Qtable, self.learning_rate
 
 
         
