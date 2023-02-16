@@ -1,5 +1,6 @@
 # Ed, Kat, Galit
 # ReinforceAlgorithm Class: Solver.
+# Implement an off-policy Q-learning algorithm
 
 import numpy as np #repeated
 
@@ -18,64 +19,77 @@ class LearningAlgorithm():
         self.learning_rate = Qtable.learning_rate
         self.number_episodes = number_episodes
         self.gamma = discount_factor
-        self.number_states=Qtable.number_states #Qtable dimen - number of states x number of actions x number of stages
+        self.number_demands=Qtable.number_demands #Qtable dimen - number of states x number of actions x number of stages
         self.number_stages=Qtable.number_stages
-        if self.number_states % 2 ==1 :
-            print('num of states should be even')
         self.number_actions=Qtable.number_actions
-        if self.number_actions % 2 ==1 :
-            print('num of actions should be even')
-        self.lowest_state = int(200-(self.number_states)/2) # Should already be int
-        self.highest_state = int(200+(self.number_states)/2 - 1) # Should already be int
+        self.highest_demand = int(self.number_demands - 1) 
         
         
     def reset_Qtable(self):
         self.Qtable, self.learning_rate = self.Qtable.reset()
-        """
-        This function will eventually choose and adversary agent to play against
-        and according to that return an action played by that adversary. 
-        This could be chosen according to some existing equilibruim dist.
-        """
-    def choose_adversary(self, state):
-        return int((400 - state + self.env.costs[1])/2) #myopic
 
-    def state_index(self, state):                 # computes state index in Qtable
-        return int(state - self.lowest_state) 
-        #return min(int(state -(200-self.number_states/2)), self.number_states - 1)
 
     def action_index(self, monopoly_price, action):      # computes action index in Qtable
         return int(action - (monopoly_price - self.number_actions + 1)) #monopoly_price should have index number_actions - 1
 
     def alpha_n(self, n):                       # defines the Qlearning rate
         return self.learning_rate[0]/(n+self.learning_rate[1])
+    
     """
     Now the Q-learning itself 
     """
-    def  solver(self):
+    
+    def random_policy(self, monopoly_price):
+        random_action = np.random.randint(monopoly_price-self.number_actions+1, monopoly_price + 1)
+        if random_action < 0:
+            random_action = max(0, random_action)
+        if self.env.costs[0] > random_action:
+            random_action = monopoly_price 
+        return random_action
+    
+    def q_learning(self, state_action_value, optimal_next_value, reward, alpha, gamma): 
+        target = reward + gamma * optimal_next_value
+        return state_action_value + alpha * (target - state_action_value)
+    
+    
+    def solver(self):
         
         self.reset_Qtable
-
-        for episode in range(self.number_episodes):
-
-            state = np.random.randint(self.lowest_state, self.highest_state + 1) 
-            stage = np.random.randint(0, self.number_stages)
-            monopoly_price = int((state + self.env.costs[0]) / 2) 
-            action = np.random.randint(monopoly_price-self.number_actions+1, monopoly_price + 1)
-            adversary_action = self.choose_adversary(state)
-            reward = (state-action)*(action-self.env.costs[0])
-            next_state = int(state+.5*(adversary_action-action))
-            if(stage==self.number_stages-1): 
-                optimal_next_value=0
-            else:
-                optimal_next_value=max(self.Qtable[self.state_index(next_state),:, stage+1])
+        best_payoff = 0
         
+        for episode in range(self.number_episodes):
+            payoff = 0
+            if episode % 250_000 == 0:
+                print(episode)
+            
+            state, reward, done = self.env.reset()
+            discount = 1
+            while not done:
+                stage, agent_demand, adversary_previous_action = state
+                if (agent_demand < 0) or (agent_demand > self.highest_demand):
+                    break
+                if (stage > 0 and adversary_previous_action < self.env.costs[1]) or (self.highest_demand - agent_demand < adversary_previous_action):
+                    break
+                monopoly_price = int((agent_demand + self.env.costs[0]) / 2) 
+                action = self.random_policy(monopoly_price)
+                demand_index = int(agent_demand)
+                action_index = self.action_index(monopoly_price, action)
+                if episode % 1000 == 0:
+                    action_index = np.argmax(self.Qtable[demand_index, :, stage])
+                    action = action_index + int((agent_demand + self.env.costs[0])/2) - self.number_actions + 1
+                state, reward, done = self.env.step(state, action)
+                payoff += reward * discount
+                discount *= self.gamma
 
-            # updating the Qtable
-            q_value = (1-self.alpha_n(episode)) * \
-                   self.Qtable[self.state_index(state), self.action_index(monopoly_price, action), stage]\
-                   + self.alpha_n(episode) * \
-                   ((1-self.gamma)*reward + self.gamma*optimal_next_value)
-            self.Qtable[self.state_index(state), self.action_index(monopoly_price, action), stage]=q_value
-
-
-
+                # updating the Qtable
+                if done: 
+                    optimal_next_value = 0
+                else:
+                    optimal_next_value = max(self.Qtable[int(state[1]),:, state[0]])
+                
+                current_q_value = self.Qtable[demand_index, action_index, stage]
+                self.Qtable[demand_index, action_index, stage] = self.q_learning(current_q_value, optimal_next_value, reward, self.alpha_n(episode), self.gamma)
+                if(payoff > best_payoff):
+                    best_payoff = payoff
+                    if episode > 10000:
+                        print(best_payoff)

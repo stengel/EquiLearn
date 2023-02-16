@@ -56,9 +56,6 @@ class DemandPotentialGame():
                     int(self.demand_potential[0][self.stage] + (price_pair[1] - price_pair[0])/2)
                 self.demand_potential[1][self.stage + 1] = 400 - self.demand_potential[0][self.stage + 1]
                 
-#         print(self.prices[0][self.stage],self.prices[1][self.stage],self.profit[0][self.stage], \
-#               self.profit[1][self.stage],self.demand_potential[0][self.stage], \
-#               self.demand_potential[1][self.stage])
 
     def monopoly_price(self, player):  # myopic monopoly price
         """
@@ -76,15 +73,11 @@ class DemandPotentialGame():
         """
             Adversary follows Constant strategy
         """
-        if self.stage == self.total_stages-1:
-            return self.monopoly_price(player)
         return price
 
     def imit(self, player, firstprice):  # price imitator strategy
         if self.stage == 0:
             return firstprice
-        if self.stage == self.total_stages-1:
-            return self.monopoly_price(player)
         return self.prices[1-player][self.stage-1]
 
     def fight(self, player, firstprice):  # simplified fighting strategy
@@ -232,7 +225,7 @@ class Model(DemandPotentialGame):
         Transition Function. 
         Parameters:
         - action: Price
-        - state: tupple in the latest stage (stage ,Demand Potential, Adversary's prev price)
+        - state: tupple in the latest stage (stage ,Demand Potential, Adversary Action)
         """
         adversary_action = int(self.adversary_choose_price())
         self.update_prices_profit_demand([action, adversary_action])

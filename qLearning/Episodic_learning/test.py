@@ -14,7 +14,7 @@ class Test():
         
         self.env = Model
         self.Qtable = Qtable.Q_table 
-        self.number_states=Qtable.number_states
+        self.number_demands=Qtable.number_demands
         self.number_actions=Qtable.number_actions
         self.number_stages=Qtable.number_stages
         self.discount_factor = discount_factor  
@@ -30,24 +30,13 @@ class Test():
         new_probabilities = [0]*len(self.adversary_probabilities)
         new_probabilities[adversary_index] = 1
         self.env.adversary_probabilities = new_probabilities
-        
-    
-    def best_responses(self):
-        states = [0]* self.number_states
-        best_responses = [0]* self.number_states
-        for i in range(self.number_states):
-            demand = int((200-self.number_states/2)) + i
-            states[i] = demand
-            action = np.argmax(self.Qtable[i]) + int((demand + self.env.costs[0])/2) - self.number_actions + 1
-            best_responses[i] = action
-        return states, best_responses
             
 
     def total_payoff(self):
-        
+
         self.set_adversary()
         
-        delta = 1/self.discount_factor
+        delta = 1
         utility = 0
         adversary_utility = 0
         actions = [0]*self.number_stages
@@ -57,56 +46,67 @@ class Test():
         demand = state_vector[1]
         
         for stage in range(self.number_stages):
-            delta = delta * self.discount_factor
             demands[stage] = demand
-            if (int(demand -(200-self.number_states/2)) > len(self.Qtable) -1):
-                print("max action reached")
-                demand = int((200-self.number_states/2) + len(self.Qtable) -1)
-            if (int(demand -(200-self.number_states/2)) < 0):
-                print("min action reached")
-                demand = int((200-self.number_states/2))
-            demand_index = int(demand -(200-self.number_states/2))
+            if demand >= self.number_demands:
+                print("max demand reached")
+                demand = self.number_demands - 1
+            if demand < 0:
+                print("min demand reached")
+                demand = 0
+            demand_index = int(demand)
             action_index = np.argmax(self.Qtable[demand_index, :, stage])
             action = action_index + int((demand + self.env.costs[0])/2) - self.number_actions + 1
             actions[stage] = action
             utility += (demand-action)*(action-self.env.costs[0]) * delta
             adversary_demand = 400 - demand
-            state_vector, reward, done = self.env.step(state_vector, action)
+            state_vector, _, _ = self.env.step(state_vector, action)
             demand = state_vector[1]
             adversary_actions[stage] = state_vector[2]
             adversary_utility += (adversary_demand-adversary_actions[stage])*(adversary_actions[stage]-self.env.costs[1]) * delta
+            delta *= self.discount_factor
         return utility, adversary_utility, np.transpose(actions), np.transpose(adversary_actions), np.transpose(demands)
 
+
+    def q_learning(self, state_action_value, optimal_next_value, reward, alpha, gamma): 
+        target = reward + gamma * optimal_next_value
+        return state_action_value + alpha * (target - state_action_value)
     
-    def error(self):
+    def error(self, number_tests):
         
-        Qtable_error = np.zeros((self.number_states, self.number_actions, self.number_stages))
-        lowest_state = int(200-(self.number_states - 1)/2)
+        self.set_adversary()
         
-        for state_index in range(self.number_states):
-            for action_index in range(self.number_actions):
-                for stage in range(self.number_stages):
-                    state = state_index + lowest_state
-                    monopoly_price = int((state + self.env.costs[0])/2) 
-                    action = action_index + monopoly_price - self.number_actions + 1
-                    reward = (state - action) * (action - self.env.costs[0])
-                    adv_action = int(self.choose_adversary_action(state))
-                    next_state = int(state + (adv_action - action)/2)
-                    next_state_index = next_state - lowest_state
-                    if(stage==self.number_stages-1):
-                        optimal_next_value = 0
-                    else:
-                        optimal_next_value = max(self.Qtable[next_state_index, : , stage+1])
-                    new_value = (1-self.discount_factor)*reward + self.discount_factor * optimal_next_value
-                    if new_value != 0:
-                        Qtable_error[state_index,action_index, stage] = (new_value - self.Qtable[state_index,action_index, stage])/new_value
-                    if new_value == 0 and self.Qtable[state_index,action_index, stage] != 0:
-                        print("Div by zero error") # This should not occur
-        return Qtable_error
+        errors = np.zeros(number_tests)
+        
+        for test in range(number_tests):
+            state, reward, done = self.env.reset()
+            stage, demand, _ = state
+        
+        
+            while not done:
+                if demand >= self.number_demands:
+                    print("max demand reached")
+                    demand = self.number_demands - 1
+                if demand < 0:
+                    print("min demand reached")
+                    demand = 0
+                demand_index = int(demand)
+                action_index = np.random.randint(0, self.number_actions)
+                action = action_index + int((demand + self.env.costs[0])/2) - self.number_actions + 1
+                state, reward, done = self.env.step(state, action)
+                stage, demand, _ = state
+                
+                if done: 
+                    optimal_next_value = 0
+                else:
+                    optimal_next_value = max(self.Qtable[demand,:, stage])
+                
+                new_value = reward + self.discount_factor * optimal_next_value
+                if new_value != 0:
+                    errors[test] += (new_value - self.Qtable[demand_index, action_index, stage-1])/new_value
+                if new_value == 0 and self.Qtable[demand_index,action_index, stage-1] != 0:
+                    print("Div by zero error") # This should not occur
+        return errors.mean()/self.number_stages
     
-    
-    def choose_adversary_action(self, state):
-        return self.myopic(self.env.costs[1],400-state)
         
 
     
@@ -117,8 +117,8 @@ class Test():
         return (demand - price)*(price - cost)
        
     def update_demand(self, demand, price_pair):
-        newDemand = demand + 0.5*(price_pair[1]- price_pair[0])
-        return newDemand
+        new_demand = demand + 0.5*(price_pair[1]- price_pair[0])
+        return new_demand
     
     def utility_of_actions(self, actions):
         agent_demand = 200
