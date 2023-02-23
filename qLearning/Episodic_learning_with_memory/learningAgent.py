@@ -58,7 +58,7 @@ class LearningAlgorithm():
         
         for episode in range(self.number_episodes):
             
-            if episode % 200_000 == 0:
+            if episode % 500_000 == 0:
                 print(episode)
             
             state, reward, done = self.env.reset()
