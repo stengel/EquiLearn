@@ -91,5 +91,5 @@ class LearningAlgorithm():
                 self.Qtable[demand_index, action_index, stage] = self.q_learning(current_q_value, optimal_next_value, reward, self.alpha_n(episode), self.gamma)
                 if(payoff > best_payoff):
                     best_payoff = payoff
-                    if episode > 10000:
-                        print(best_payoff)
+                if episode == self.number_episodes - 1:
+                    print(best_payoff)
