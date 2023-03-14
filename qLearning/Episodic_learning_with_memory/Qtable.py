@@ -2,7 +2,8 @@
 # Relates to the Q-Learning approach.
 # Defines the Q-table
 
-import numpy as np  
+import numpy as np 
+import os
 
 class QTable():
     
@@ -25,6 +26,18 @@ class QTable():
     def random_reset(self):
         random_Qtable = np.random.rand(self.number_demands, self.number_actions, self.number_actions,  self.number_stages)
         return random_Qtable, self.learning_rate
+    
+    def save(self, name = None):
+        if name is None:
+            return np.save(os.path.join('QTables',f'{self.QTable_name}'), self.Q_table)
+        else:
+            return np.save(os.path.join('QTables',name), self.Q_table)
+    
+    def load(self,name = None):
+        if name is None:
+            return np.load(os.path.join('QTables',f'{self.QTable_name}'))
+        else:
+            return np.load(os.path.join('QTables',name))
 
 
         
