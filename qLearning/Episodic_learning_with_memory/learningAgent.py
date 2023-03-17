@@ -2,9 +2,9 @@
 # ReinforceAlgorithm Class: Solver.
 # Implement an off-policy Q-learning algorithm
 
-import numpy as np #repeated
+import numpy as np
 
-# printoptions: output limited to 2 digits after decimal point
+# print options: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
 
 
@@ -53,11 +53,11 @@ class LearningAlgorithm():
     
     
     def solver(self):
-        
+
         self.reset_Qtable
         best_payoff = 0
         best_actions = list()
-        
+
         for episode in range(self.number_episodes):
             
             payoff = 0
