@@ -268,8 +268,8 @@ class bimatrix:
 
     def runtrace(self, xprior, yprior):
         lcp = self.createLCP()
-        Ay = G.A.negmatrix @ yprior
-        xB = xprior @ G.B.negmatrix 
+        Ay = self.A.negmatrix @ yprior
+        xB = xprior @ self.B.negmatrix 
         lcp.d = np.hstack((Ay,xB,[1,1]))
         tabl = lemke.tableau(lcp)
         tabl.runlemke(silent=True)
