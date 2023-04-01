@@ -85,9 +85,9 @@ class LearningAlgorithm():
             if payoff > best_payoff:
                 best_payoff = payoff
                 best_actions = actions
-            if episode == number_episodes - 1:
-                print("Best payoff: ", best_payoff)
-                print("Best actions: ", best_actions)
+#             if episode == number_episodes - 1:
+#                 print("Best payoff: ", best_payoff)
+#                 print("Best actions: ", best_actions)
                 
                 
     def epsilon_greedy_policy(self, monopoly_price, episode, number_previous_episodes, greedy_action_index, total_number_episodes):

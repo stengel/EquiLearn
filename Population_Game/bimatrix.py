@@ -300,12 +300,17 @@ class bimatrix:
                 if eq in trset:
                     trset[eq] += 1
                 else:
-                    print ("found eq", str_eq(eq,m,n), "index",
-                        self.eqindex(eq,m,n))
+#                     print ("found eq", str_eq(eq,m,n), "index",
+#                         self.eqindex(eq,m,n))
                     trset[eq] = 1 
+        equilibrium = None
+        times_found = 0
         for eq in trset:
-            print (trset[eq],"times found ",str_eq(eq,m,n))
-        print(trace,"total priors,",len(trset),"equilibria found")
+            if trset[eq] > times_found:
+                equilibrium = eq
+#             print (trset[eq],"times found ",str_eq(eq,m,n))
+#         print(trace,"total priors,",len(trset),"equilibria found")
+        return str_eq(equilibrium, m,n)
 
     def eqindex(self,eq,m,n):
         rowset,colset = supports(eq,m,n)

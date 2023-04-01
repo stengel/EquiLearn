@@ -7,7 +7,7 @@ import numpy as np
 
 class Tournament():
 
-    def __init__(self, high_cost_strategies, low_cost_strategies, discount_factor, costs, number_rounds, initial_demands):
+    def __init__(self, low_cost_strategies, high_cost_strategies, discount_factor, costs, number_rounds, initial_demands):
         self.high_cost_strategies = high_cost_strategies 
         self.low_cost_strategies = low_cost_strategies
         self.discount_factor = discount_factor  
@@ -47,8 +47,8 @@ class Tournament():
     def update_demands_rewards_prices(self, low_demand, high_demand, low_action, high_action, costs, number_actions):
         low_reward = (low_demand - low_action) * (low_action - costs[0])
         high_reward = (high_demand - high_action) * (high_action - costs[1])
-        low_previous_action_index = low_action - (int((low_action + low_demand)/2) - number_actions[0] + 1)
-        high_previous_action_index = high_action - (int((high_action + high_demand)/2) - number_actions[1] + 1)
+        low_previous_action_index = number_actions[0] - 1 - ((int((low_demand + costs[0])/2)) - low_action)
+        high_previous_action_index = number_actions[1] - 1 - ((int((high_demand + costs[1])/2)) - high_action)
         low_demand += 0.5 * (high_action - low_action)
         low_demand = int(low_demand)
         high_demand = int(self.initial_demands[0] + self.initial_demands[1] - low_demand)
