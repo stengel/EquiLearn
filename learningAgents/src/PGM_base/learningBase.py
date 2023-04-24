@@ -24,51 +24,13 @@ class Solver():
         self.bestPolicy = None
         self.probBreakLn = -0.001
 
-    def playTrainedAgent(self, advMode, iterNum):
-        advProbs = torch.zeros(len(model.AdversaryModes))
-        advProbs[int(advMode.value)] = 1
-        game = model.Model(totalDemand=self.env.totalDemand,
-                           tupleCosts=self.env.costs,
-                           totalStages=self.env.T, advHistoryNum=self.env.advHistoryNum, adversaryProbs=advProbs)
-        returns = np.zeros(iterNum)
-        for episode in range(iterNum):
-
-            episodeMemory = list()
-            state, reward, done = game.reset()
-            retu = 0
-
-            while not done:
-                prevState = state
-                normPrevState = self.normalizeState(prevState)
-                probs, _ = self.policy(normPrevState)
-                distAction = Categorical(probs)
-                action = distAction.sample()
-
-                state, reward, done = game.step(
-                    prevState, action.item())
-                retu = retu + reward
-                # episodeMemory.append((normPrevState, action, reward))
-
-            # states = torch.stack([item[0] for item in episodeMemory])
-            # actions = torch.tensor([item[1] for item in episodeMemory])
-            # rewards = torch.tensor([item[2] for item in episodeMemory])
-
-            # print(f"iteration {episode} return= {retu} \n\t actions: {actions}")
-
-            # sum of the our player's rewards  rounds 0-25
-            returns[episode] = retu
-
-        # plt.plot(returns)
-        # plt.show()
-
-        return returns
 
     def write_to_excel(self, new_row):
         """
         row includes:  # ep	adversary	return	advReturn loss	actor	critic	lr	gamma	hist	clc   actions probs  nn_name  total_stages	 num_actions return_against_adversaries
         """
 
-        path = 'resultsBase.xlsx'
+        path = 'results.xlsx'
         wb = load_workbook(path)
         sheet = wb.active
         row = 2
@@ -78,6 +40,7 @@ class Solver():
         for i in range(len(new_row)):
             sheet.cell(row=row, column=col+i).value = new_row[i]
         wb.save(path)
+        # print(new_row)
 
 
 class ReinforceAlgorithm(Solver):
@@ -107,189 +70,6 @@ class ReinforceAlgorithm(Solver):
 
     # def saveResult(self):
     #     pass
-
-    # def solver(self, print_step=10_000, prob_break_limit_ln=-0.001, clc=0.1, options=[1, 1000, 1, 1]):
-    #     """
-    #         Method that performs Monte Carlo Policy Gradient algorithm.
-    #         #options:[state_representation, rewards_division, optim, reward_def]
-    #     """
-
-    #     for iteration in range(self.numberIterations):
-    #         self.resetPolicyNet()
-
-    #         if options[2] == 2:
-    #             self.optim = torch.optim.SGD(
-    #                 self.policy.parameters(), lr=self.neuralNetwork.lr)
-    #         elif options[2] == 1:
-    #             self.optim = torch.optim.Adam(
-    #                 self.policy.parameters(), lr=self.neuralNetwork.lr)
-    #         elif options[2] == 4:
-    #             self.optim = torch.optim.Adadelta(
-    #                 self.policy.parameters(), lr=self.neuralNetwork.lr)
-    #         elif options[2] == 5:
-    #             self.optim = torch.optim.Adagrad(
-    #                 self.policy.parameters(), lr=self.neuralNetwork.lr)
-    #         elif options[2] == 6:
-    #             self.optim = torch.optim.AdamW(
-    #                 self.policy.parameters(), lr=self.neuralNetwork.lr)
-    #         elif options[2] == 7:
-    #             self.optim = torch.optim.Adamax(
-    #                 self.policy.parameters(), lr=self.neuralNetwork.lr)
-    #         elif options[2] == 8:
-    #             self.optim = torch.optim.ASGD(
-    #                 self.policy.parameters(), lr=self.neuralNetwork.lr)
-
-    #         self.returns.append([])
-    #         self.loss.append([])
-
-    #         for episode in range(self.numberEpisodes):
-
-    #             episodeMemory = list()
-    #             state, reward, done = self.env.reset()
-    #             returns = 0
-    #             probs_lst = []
-    #             value_lst = []
-    #             while not done:
-    #                 prevState = state
-    #                 normPrevState = self.normalizeState(
-    #                     prevState, mode=options[0])
-    #                 probs, value = self.policy(normPrevState)
-    #                 distAction = Categorical(probs)
-    #                 probs_lst.append(probs)
-    #                 value_lst.append(value)
-    #                 action = distAction.sample()
-
-    #                 # if episode % 1000 == 0:
-    #                 # print("-"*60)
-    #                 # print("probs= ", probs)
-
-    #                 state, reward, done = self.env.step(
-    #                     prevState, action.item())
-    #                 returns = returns + reward
-    #                 episodeMemory.append((normPrevState, action, reward))
-
-    #             if episode == 0:
-    #                 probs_lst_pre = probs_lst
-
-    #             states = torch.stack([item[0] for item in episodeMemory])
-    #             actions = torch.tensor([item[1] for item in episodeMemory])
-    #             rewards = torch.tensor([item[2]
-    #                                    for item in episodeMemory])/options[1]
-    #             values_detached = torch.tensor(value_lst)
-
-    #             action_probs = torch.stack(probs_lst)
-    #             action_dists = Categorical(action_probs)
-
-    #             action_logprobs = action_dists.log_prob(actions)
-
-    #             if options[3] == 1:
-    #                 discReturns = (self.returnsComputation(
-    #                     rewards, episodeMemory))
-    #                 discValues = (self.returnsComputation(
-    #                     values_detached, episodeMemory))
-    #                 baseDiscReturns = discReturns-discValues
-
-    #             elif options[3] == 2:
-    #                 baseRewards = rewards-(values_detached)
-    #                 baseDiscReturns = self.returnsComputation(
-    #                     baseRewards, episodeMemory)
-
-    #             actor_loss = - (torch.sum(baseDiscReturns*action_logprobs)) / \
-    #                 len(episodeMemory)
-    #             critic_loss = torch.sum(
-    #                 torch.pow(rewards-torch.stack(value_lst), 2))/len(episodeMemory)
-
-    #             # if critic_loss<actor_loss:
-    #             #     c*=0.99
-
-    #             loss = actor_loss + clc*critic_loss
-
-    #             # loss=critic_loss
-
-    #             # shouldBreak = torch.all((action_logprobs >
-    #             #                          prob_break_limit_ln))
-    #             shouldBreak = False
-
-    #             # if (episode % print_step == 0) or shouldBreak:
-    #             #     print("-"*40)
-    #             #     signs=[]
-    #             #     for i in range(len(probs_lst)):
-    #             #         sign_probs=(torch.sign(probs_lst[i]-probs_lst_pre[i]).detach().numpy())
-    #             #         # print("sign probs=",sign_probs)
-    #             #         signs.append(sign_probs[actions[i].item()])
-
-    #             #     print("prob diff=", signs)
-
-    #             #     print(episode, "  adversary: ", self.env.adversaryMode)
-    #             #     print("  actions: ", actions)
-
-    #             #     print("loss= ", loss, "  , actor= ", actor_loss,
-    #             #           "  , critic= ", critic_loss, "  , return= ", returns)
-    #             #     # print("states= ", states)
-    #             #     print("probs of actions: ", torch.exp(action_logprobs), action_logprobs)
-    #             #     print("discounted returns: ", baseDiscReturns)
-    #             #     print("rewards: ",rewards)
-    #             #     print("values: ", values_detached)
-
-    #             #     # print("shouldBreak:", shouldBreak.item())
-    #             #     # print("actionProbsDist",action_probs)
-    #             #     # print("action_dists",action_dists)
-    #             #     # print("action_logprobs",action_logprobs)
-
-    #             probs_lst_pre = probs_lst
-
-    #             self.policy.zero_grad()
-    #             loss.backward()
-
-    #             if options[2] == 3:
-    #                 with torch.no_grad():
-    #                     for param in self.policy.parameters():
-    #                         param -= self.neuralNetwork.lr * param.grad
-    #             else:
-    #                 self.optim.step()
-
-    #             # sum of the our player's rewards  rounds 0-25
-    #             # self.returns[iteration][episode] = returns
-    #             # self.loss[iteration][episode] = loss
-    #             self.returns[iteration].append(returns)
-    #             self.loss[iteration].append(loss.item())
-
-    #             # all probs >0.999 means coverged? break
-    #             if shouldBreak:
-    #                 # self.returns[iteration] = self.returns[iteration][0:episode]
-    #                 # self.loss[iteration] = self.loss[iteration][0:episode]
-    #                 break
-
-    #         # averageRetu = (
-    #         #     (self.returns[iteration]).sum())/(self.numberEpisodes)
-    #         # if (self.bestPolicy is None) or (averageRetu > self.bestAverageRetu):
-    #         #     self.bestPolicy = self.policy
-    #         #     self.bestAverageRetu = averageRetu
-
-    #         advModeNames = ""
-    #         for i in range(len(self.env.adversaryProbs)):
-    #             if self.env.adversaryProbs[i] != 0:
-    #                 tmp = "{:.1f}".format(self.env.adversaryProbs[i])
-    #                 advModeNames += f"{(em.AdversaryModes(i)).name}-{tmp}-"
-
-    #         # name = f" {options} ep {len(self.returns[iteration])}, {advModeNames}, {self.env.advHistoryNum} hist, {self.neuralNetwork.lr} lr"
-
-    #         name = f"{[self.neuralNetwork.lr, self.gamma,clc]}-{options}-{int(time.time())}"
-    #         self.neuralNetwork.save(name=name)
-    #         print(name)
-    #         # ep	adversary	return  advReturn	loss	actor	critic	lr	gamma	hist	clc   actions   probs  nn_name  total_stages	  num_actions return_against adversaries
-    #         new_row = [len(self.returns[iteration]), str(self.env.adversaryProbs), returns, sum(self.env.profit[1]), loss.item(), actor_loss.item(
-    #         ), critic_loss.item(), self.neuralNetwork.lr, self.gamma, self.env.advHistoryNum, clc, str(actions), str((torch.exp(action_logprobs)).detach().numpy()), name, self.env.T, self.neuralNetwork.num_actions]
-
-    #         for advmode in em.AdversaryModes:
-    #             new_row.append(
-    #                 np.array(self.playTrainedAgent(advmode, 10)).mean())
-
-    #         self.write_to_excel(new_row)
-
-    #         plt.scatter(
-    #             range(len(self.returns[iteration])), self.returns[iteration])
-    #         plt.show()
 
     def returnsComputation(self, rewards, episodeMemory=None):
         """
@@ -340,39 +120,31 @@ class ReinforceAlgorithm(Solver):
                     (self.env.totalDemand)
             return torch.tensor(normalized)
 
-    def learn_all_stages(self, episodes, print_step=50_000, options=[1, 1000, 1, 1], convergeBreak=False):
+    def solver(self, print_step=50_000, options=[1, 1000, 1, 1], converge_break=False):
         self.returns = []
         self.loss = []
-        for stage in range(self.env.T-1, -1, -1):
-            self.learn_stage(stage=stage, episodes=episodes, print_step=print_step, options=options,
-                             prob_break_limit_ln=(self.probBreakLn if convergeBreak else None))
 
-        # advModeNames = ""
-        # for i in range(len(self.env.adversaryProbs)):
-        #     if self.env.adversaryProbs[i] != 0:
-        #         tmp = "{:.1f}".format(self.env.adversaryProbs[i])
-        #         advModeNames += f"{(model.AdversaryModes(i)).name}-{tmp}-"
+        fig, axs = plt.subplots(self.numberIterations, 2, figsize=(10, 3*self.numberIterations))
 
+        for iter in range(self.numberIterations):
 
-        name = f"{self.env.advHistoryNum}[{self.neuralNetwork.lr},{self.gamma}]{str(options)} {int(time.time())}"
+            self.resetPolicyNet()
+            self.returns.append([])
+            self.loss.append([])
 
-        # self.name = f"{[self.neuralNetwork.lr, self.gamma,clc]}-stage {stage}-{int(time.time())}"
-        # self.neuralNetwork.save(name=name)
-        # print(name)
-        # ep	adversary	return  advReturn	loss	actor	critic	lr	gamma	hist	clc   actions   probs  nn_name  total_stages	  num_actions return_against adversaries
-        # new_row = [len(self.returns[iteration]), str(self.env.adversaryProbs), returns,sum(self.env.profit[1]), loss.item(), actor_loss.item(
-        # ), critic_loss.item(), self.neuralNetwork.lr, self.gamma, self.env.advHistoryNum, clc, str(actions),str((torch.exp(action_logprobs)).detach().numpy()), name, self.env.T, self.neuralNetwork.num_actions]
+            for stage in range(self.env.T-1, -1, -1):
+                self.learn_stage_onwards(iter,stage=stage, episodes=int(self.numberEpisodes/self.env.T), print_step=print_step, options=options,
+                                prob_break_limit_ln=(self.probBreakLn if converge_break else None), write_save=True if stage==0 else False)
+                
+            axs[iter][0].scatter(range(len(self.returns[iter])), self.returns[iter])
+            axs[iter][1].scatter(range(len(self.loss[iter])), self.loss[iter])
 
-        # for advmode in em.AdversaryModes:
-        #     new_row.append(np.array(self.playTrainedAgent(advmode,10)).mean())
-
-        # self.write_to_excel(new_row)
-
-        plt.scatter(
-            range(len(self.returns)), self.returns)
         plt.show()
+            
 
-    def learn_stage_onwards(self, stage, episodes, print_step=10_000, prob_break_limit_ln=None, options=[1, 10000, 1, 2], lr=None, just_stage=False):
+        
+
+    def learn_stage_onwards(self,iter,stage, episodes, print_step=10_000, prob_break_limit_ln=None, options=[1, 10000, 1, 2], lr=None, just_stage=False, write_save=False):
         """
             Method that just learns the actions of stages after the input stage. 
 
@@ -383,8 +155,6 @@ class ReinforceAlgorithm(Solver):
         if lr is not None:
             self.optim.lr = lr
 
-        # self.returns.append([])
-        # self.loss.append([])
 
         for episode in range(episodes):
 
@@ -423,19 +193,7 @@ class ReinforceAlgorithm(Solver):
 
             action_logprobs = action_dists.log_prob(actions)
 
-            # myopicPrice= (self.env.demandPotential[0][(self.env.T)-1] + self.env.costs[0])/2
-            # value = (
-            #     self.env.demandPotential[0][(self.env.T)-1] - myopicPrice)*(myopicPrice - self.env.costs[0])/options[1]
-
-            # baseRewards = rewards-value
-            # baseDiscReturns2 = self.returnsComputation(
-            #     baseRewards, episodeMemory)
-            # if episode == 0:
-            #         self.meanStageValue = rewards
-
-            # G=rewards[-1]-self.meanStageValue[-1]
-
-            # G=rewards[-1]-0.5
+            
 
             actionsLogProbs = action_logprobs[stage:]
             discRewards = self.returnsComputation(rewards=rewards)
@@ -449,10 +207,7 @@ class ReinforceAlgorithm(Solver):
             else:
                 loss = -(torch.sum(finalReturns*actionsLogProbs))
 
-            # loss=critic_loss
-
-            # shouldBreak = torch.all((action_logprobs >
-            #                          prob_break_limit_ln))
+            
             shouldBreak = False
 
             if prob_break_limit_ln is not None and action_logprobs[stage] > prob_break_limit_ln:
@@ -460,16 +215,9 @@ class ReinforceAlgorithm(Solver):
 
             if (episode % print_step == (print_step-1)) or shouldBreak:
                 print("-"*40)
-                # signs = []
-                # for i in range(len(probs_lst)):
-                #     sign_probs = (torch.sign(
-                #         probs_lst[i]-probs_lst_pre[i]).detach().numpy())
-                #     # print("sign probs=",sign_probs)
-                #     signs.append(sign_probs[actions[i].item()])
+                
 
-                # print("prob diff=", signs)
-
-                print(episode, "  adversary: ", self.env.adversaryMode)
+                print("iter ",iter," stage ",stage," ep ",episode, "  adversary: ", self.env.adversaryMode)
                 print("  actions: ", actions)
 
                 print("loss= ", loss, "  ,  base rewards=",
@@ -503,14 +251,36 @@ class ReinforceAlgorithm(Solver):
             # sum of the our player's rewards  rounds 0-25
             # self.returns[iteration][episode] = returns
             # self.loss[iteration][episode] = loss
-            self.returns.append(returns)
-            self.loss.append(loss.item())
+            self.returns[iter].append(returns)
+            self.loss[iter].append(loss.item())
 
             # all probs >0.999 means coverged? break
             if shouldBreak:
                 # self.returns[iteration] = self.returns[iteration][0:episode]
                 # self.loss[iteration] = self.loss[iteration][0:episode]
                 break
+        if write_save:
+            # advModeNames = ""
+            # for i in range(len(self.env.adversaryProbs)):
+            #     if self.env.adversaryProbs[i] != 0:
+            #         tmp = "{:.1f}".format(self.env.adversaryProbs[i])
+            #         advModeNames += f"{(model.AdversaryModes(i)).name}-{tmp}-"
+
+            name = f"{self.env.advHistoryNum},[{self.neuralNetwork.lr},{self.gamma}]{str(options)},{int(time.time())}"
+
+            # self.name = f"{[self.neuralNetwork.lr, self.gamma,clc]}-stage {stage}-{int(time.time())}"
+            self.neuralNetwork.save(name=name)
+            print(name, "saved")
+            # ep	adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	  num_actions   return_against_adversaries
+            new_row = [len(self.returns[iter]), str(self.env.adversaryProbs), returns, sum(self.env.profit[1]), loss.item(), self.neuralNetwork.lr, self.gamma, self.env.advHistoryNum, str(actions), str((torch.exp(action_logprobs)).detach().numpy()), name, self.env.T, self.neuralNetwork.num_actions]
+
+            for advmode in model.AdversaryModes:
+                new_row.append(np.array(self.playTrainedAgent(advmode,10)).mean())
+
+            self.write_to_excel(new_row)
+            
+
+        
 
     def computeBase(self, advPrices, startStage=0, initDemand=None):
         """
@@ -530,3 +300,42 @@ class ReinforceAlgorithm(Solver):
 
     # def myopic_price(demand,cost):
     #     return (demand + cost)/2
+
+    def playTrainedAgent(self, advMode, iterNum,options=[1, 1000, 1, 1]):
+        advProbs = torch.zeros(len(model.AdversaryModes))
+        advProbs[int(advMode.value)] = 1
+        game = model.Model(totalDemand=self.env.totalDemand,
+                           tupleCosts=self.env.costs,
+                           totalStages=self.env.T, advHistoryNum=self.env.advHistoryNum, adversaryProbs=advProbs)
+        returns = np.zeros(iterNum)
+        for episode in range(iterNum):
+
+            episodeMemory = list()
+            state, reward, done = game.reset()
+            retu = 0
+
+            while not done:
+                prevState = state
+                normPrevState = self.normalizeState(prevState,mode=options[0])
+                probs= self.policy(normPrevState)
+                distAction = Categorical(probs)
+                action = distAction.sample()
+
+                state, reward, done = game.step(
+                    prevState, action.item())
+                retu = retu + reward
+                # episodeMemory.append((normPrevState, action, reward))
+
+            # states = torch.stack([item[0] for item in episodeMemory])
+            # actions = torch.tensor([item[1] for item in episodeMemory])
+            # rewards = torch.tensor([item[2] for item in episodeMemory])
+
+            # print(f"iteration {episode} return= {retu} \n\t actions: {actions}")
+
+            # sum of the our player's rewards  rounds 0-25
+            returns[episode] = retu
+        
+        return returns
+
+        # plt.plot(returns)
+        # plt.show()
