@@ -85,7 +85,7 @@ if __name__ == "__main__":
             higherdim = a
     if len(arglist)>4:
         naiveplot = True
-    print (f"{numpoints=} {accuracy=} {higherdim=} {naiveplot=}")
+    print (f"numpoints= {numpoints} accuracy= {accuracy} higherdim= {higherdim} naiveplot= {naiveplot}")
     if higherdim>3:
         segmentstart = (higherdim-2)//2
         print ("show positions", segmentstart,"..",

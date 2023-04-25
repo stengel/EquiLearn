@@ -533,7 +533,7 @@ if __name__ == "__main__":
     # exit(0)
 
     processArguments()
-    printout (f"{verbose=} {lcpfilename=} {silent=} {z0=}")
+    printout (f"verbose= {verbose} lcpfilename= {lcpfilename} silent= {silent} z0= {z0}")
     # printout (f"{verbose}= {lcpfilename}= {silent}= {z0}=")
     m = lcp(lcpfilename)
     printout(m)
