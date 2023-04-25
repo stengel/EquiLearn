@@ -262,6 +262,7 @@ class bimatrix:
             else:
                 print ("label",k,"found eq", str_eq(eq,m,n))
                 lhset[eq] = [k] 
+        print ("-------- equilibria found: --------")
         for eq in lhset:
             print (str_eq(eq,m,n),"found by labels", str(lhset[eq]))
         return lhset
@@ -303,6 +304,7 @@ class bimatrix:
                     print ("found eq", str_eq(eq,m,n), "index",
                         self.eqindex(eq,m,n))
                     trset[eq] = 1 
+        print ("-------- statistics of equilibria found: --------")
         for eq in trset:
             print (trset[eq],"times found ",str_eq(eq,m,n))
         print(trace,"total priors,",len(trset),"equilibria found")
