@@ -8,7 +8,7 @@ including
 
 class QValueFunction
 
-but the functions 
+except for the following functions, which are for Q-learning itself, and are new, by Rahul:
 
     def get_action_q_value_dict(self, state):
     def get_best_q_value(self, state):
