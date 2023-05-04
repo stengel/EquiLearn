@@ -1,28 +1,40 @@
 After filltableau:
 Determinant: -1
-var  z0 z1 z2 z3 z4 RHS
-scfa  1  1  1  1  1   1
-                       
-w1    1  .  1 -1  .   .
-w2    1  1  .  . -1   .
-w3    1  1  .  .  .  -1
-w4    1  .  1  .  .  -1
+var       z0   z1   z2  z3   z4  z5  z6   z7 z8 z9 RHS
+scfa    1000    1    1   1    1   1   1    1  1  1   1
+                                                      
+w1    498593    .    . 605 1203 343 150  955 -1  .   .
+w2    221079    .    . 246  344 208   1 1109 -1  .   .
+w3   1493796 1509 1425   .    .   .   .    .  . -1   .
+w4   1096217 1104 1061   .    .   .   .    .  . -1   .
+w5   1242871 1335  826   .    .   .   .    .  . -1   .
+w6   1287115 1393  808   .    .   .   .    .  . -1   .
+w7    530074  647    1   .    .   .   .    .  . -1   .
+w8      1000    1    1   .    .   .   .    .  .  .  -1
+w9      1000    .    .   1    1   1   1    1  .  .  -1
 -----------------end of tableau-----------------
-leaving: w4   entering: z0
-leaving: w2   entering: z4
-leaving: w3   entering: z2
-leaving: w1   entering: z3
-leaving: z0   entering: z1
+leaving: w9   entering: z0
+leaving: w7   entering: z9
+leaving: w8   entering: z7
+leaving: w2   entering: z8
+leaving: w1   entering: z2
+leaving: z2   entering: z1
+leaving: z0   entering: w2
 Final tableau:
 Determinant: 1
-var  w4 z0 w3 w1 w2 RHS
-scfa  1  1  1  1  1   1
-                       
-z3   -1  .  .  1  .   1
-z4    .  . -1  .  1   1
-z2   -1  1  .  .  .   1
-z1    .  1 -1  .  .   1
+var    w9   z2 w1  z3   z4  z5  z6   w8      z0 w7 RHS
+scfa    1    1  1   1    1   1   1    1    1000  1   1
+                                                      
+z1      .    1  .   .    .   .   .   -1    1000  .   1
+z8   -955    .  1 350 -248 612 805    .  456407  . 955
+w3      . -562  .   .    .   .   . -862 -101722 -1 862
+w4      . -603  .   .    .   .   . -457 -109143 -1 457
+w5      . -137  .   .    .   .   . -688  -24797 -1 688
+w6      .  -61  .   .    .   .   . -746  -11041 -1 746
+z9      .  646  .   .    .   .   . -647  116926  1 647
+z7     -1    .  .   1    1   1   1    .    1000  .   1
+w2   -154    . -1 513 1013 289 303    .  431514  . 154
 -----------------end of tableau-----------------
-basis=    z1 z2 z3 z4
-    z=  0  1  1  1  1
-    w=     0  0  0  0
+basis=    z1  w2  w3  w4  w5  w6 z7  z8  z9
+    z=  0  1   0   0   0   0   0  1 955 647
+    w=     0 154 862 457 688 746  0   0   0
