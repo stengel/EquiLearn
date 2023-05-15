@@ -7,7 +7,7 @@ def initialize():
     adversaryHistroy = 3
     lr = 0.000005
     gamma = 1
-    numActions = 3
+    numActions = 20
     actionStep = 3
     numStochasticIter = 10
 
