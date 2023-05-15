@@ -13,18 +13,22 @@ class NNBase():
     """
 
     save_path_format = './NNs/{name}.pt'
+    policy=None
+    optim=None
 
-    def __init__(self, lr=.000001, num_input=3, num_actions=50, nn_dim=512) -> None:
+    def __init__(self, lr=.000001, num_input=3, num_actions=50, nn_dim=512,adv_hist=0,action_step=1) -> None:
 
         self.lr = lr
         self.num_input = num_input
         self.num_actions = num_actions
         self.nn_dim = nn_dim
+        self.adv_hist = adv_hist
+        self.action_step= action_step
 
         self.nn_name = f"nn, lr={self.lr}, actions={self.num_actions}"
 
     def reset(self):
-        print("policy reset")
+        
         self.policy = nn.Sequential(
             nn.Linear(self.num_input, self.nn_dim),
             nn.ReLU(),
@@ -36,16 +40,21 @@ class NNBase():
         self.optim = torch.optim.Adam(self.policy.parameters(), lr=self.lr)
         # print(self.policy[0].weight)
         # print(self.policy[2].weight)
+        # print("policy reset")
         return self.policy, self.optim
 
     def save(self, name=None):
         self.nn_name = (self.nn_name if name is None else name)
+        # print("policy saved!")
         return torch.save(self.policy.state_dict(), self.save_path_format.format(name=self.nn_name))
 
     def load(self, name=None):
+        if self.policy is None:
+            self.reset()
         self.nn_name = (self.nn_name if name is None else name)
         self.policy.load_state_dict(
             torch.load(self.save_path_format.format(name=self.nn_name)))
+        # print("policy loaded!")
 
 
 # class PlicyGradient():

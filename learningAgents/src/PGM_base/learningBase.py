@@ -23,11 +23,12 @@ class Solver():
         self.numberIterations = numberIterations
         self.bestPolicy = None
         self.probBreakLn = -0.001
+        
 
 
     def write_to_excel(self, new_row):
         """
-        row includes:  # ep	adversary	return	advReturn loss	actor	critic	lr	gamma	hist	clc   actions probs  nn_name  total_stages	 num_actions return_against_adversaries
+        row includes:  # ep	adversary	return	advReturn loss	actor	critic	lr	gamma	hist	clc   actions probs  nn_name  total_stages	action_step num_actions return_against_adversaries
         """
 
         path = 'results.xlsx'
@@ -48,7 +49,7 @@ class ReinforceAlgorithm(Solver):
         Model Solver.
     """
 
-    def __init__(self, Model, neuralNet, numberIterations, numberEpisodes, discountFactor) -> None:
+    def __init__(self, Model, neuralNet, numberIterations, numberEpisodes, discountFactor,actionStep=1) -> None:
         super().__init__(numberEpisodes, Model, discountFactor, numberIterations)
 
         self.env.adversaryReturns = np.zeros(numberEpisodes)
@@ -59,6 +60,7 @@ class ReinforceAlgorithm(Solver):
 
         self.returns = []
         self.loss = []
+        self.actionStep, self.neuralNetwork.action_step=actionStep, actionStep
         # self.returns = np.zeros((numberIterations, numberEpisodes))
         # self.loss = np.zeros((numberIterations, numberEpisodes))
 
@@ -67,6 +69,13 @@ class ReinforceAlgorithm(Solver):
             Reset Policy Neural Network.
         """
         self.policy, self.optim = self.neuralNetwork.reset()
+    def loadPolicyNet(self, name):
+        """
+            Load Policy Neural Network.
+        """
+        self.resetPolicyNet()
+        self.neuralNetwork.load(name)
+
 
     # def saveResult(self):
     #     pass
@@ -86,45 +95,16 @@ class ReinforceAlgorithm(Solver):
 
         # return torch.tensor([torch.sum(rewards[i:] * (self.gamma ** torch.arange(0, (len(episodeMemory)-i)))) for i in range(len(episodeMemory))])
 
-    def normalizeState(self, state, mode=1):
-        # [stage, agent's demand potential, agent's last price, history of adversary's prices]
+    
 
-        if mode == 1:
-            normalized = [0]*len(state)
-            for i in range(self.env.T):
-                normalized[i] = state[i]
-            for i in range(self.env.T, len(state)):
-                normalized[i] = state[i]/(self.env.totalDemand)
-            return torch.tensor(normalized)
-        elif mode == 2:
-
-            normalized = torch.zeros(len(state))
-            for i in range(self.env.T):
-                normalized[i] = state[i]
-
-            normalized[self.env.T] = -self.env.our_target_demand + \
-                state[self.env.T]  # demand
-
-            for i in range(self.env.T+1, len(state)):
-                normalized[i] = -(self.env.target_price) + \
-                    state[i]  # both players' prices
-            return normalized
-        elif mode == 3:
-            return nn.functional.normalize(state, p=2.0, dim=0)
-        elif mode == 4:
-            normalized = [0]*len(state)
-            for i in range(self.env.T):
-                normalized[i] = state[i]
-            for i in range(self.env.T, len(state)):
-                normalized[i] = (state[i]-self.env.costs[0]) / \
-                    (self.env.totalDemand)
-            return torch.tensor(normalized)
-
-    def solver(self, print_step=50_000, options=[1, 1000, 1, 1], converge_break=False):
+    def solver(self, print_step=50_000, options=[1, 10000, 1, 1], converge_break=False):
+        """
+        print_step=None means no printing
+        """
         self.returns = []
         self.loss = []
 
-        fig, axs = plt.subplots(self.numberIterations, 2, figsize=(10, 3*self.numberIterations))
+        # fig, axs = plt.subplots(max(self.numberIterations,2), 2, figsize=(15, 6*self.numberIterations))
 
         for iter in range(self.numberIterations):
 
@@ -133,16 +113,16 @@ class ReinforceAlgorithm(Solver):
             self.loss.append([])
 
             for stage in range(self.env.T-1, -1, -1):
-                self.learn_stage_onwards(iter,stage=stage, episodes=int(self.numberEpisodes/self.env.T), print_step=print_step, options=options,
+                self.learn_stage_onwards(iter,stage=stage, episodes=int(self.numberEpisodes*(self.env.T-stage)), print_step=print_step, options=options,
                                 prob_break_limit_ln=(self.probBreakLn if converge_break else None), write_save=True if stage==0 else False)
                 
-            axs[iter][0].scatter(range(len(self.returns[iter])), self.returns[iter])
-            axs[iter][1].scatter(range(len(self.loss[iter])), self.loss[iter])
+            # axs[iter][0].scatter(range(len(self.returns[iter])), self.returns[iter])
+            # axs[iter][1].scatter(range(len(self.loss[iter])), self.loss[iter])
 
-        plt.show()
+        # plt.show()
             
 
-        
+   
 
     def learn_stage_onwards(self,iter,stage, episodes, print_step=10_000, prob_break_limit_ln=None, options=[1, 10000, 1, 2], lr=None, just_stage=False, write_save=False):
         """
@@ -164,7 +144,7 @@ class ReinforceAlgorithm(Solver):
             probs_lst = []
             while not done:
                 prevState = state
-                normPrevState = self.normalizeState(prevState, mode=options[0])
+                normPrevState = self.env.normalizeState(prevState)
                 probs = self.policy(normPrevState)
                 distAction = Categorical(probs)
                 probs_lst.append(probs)
@@ -176,7 +156,7 @@ class ReinforceAlgorithm(Solver):
                 # print("probs= ", probs)
 
                 state, reward, done = self.env.step(
-                    prevState, action.item())
+                    self.env.compute_price(action=action.item(),actionStep=self.actionStep))
                 returns = returns + reward
                 episodeMemory.append((normPrevState, action, reward))
 
@@ -210,26 +190,25 @@ class ReinforceAlgorithm(Solver):
             
             shouldBreak = False
 
-            if prob_break_limit_ln is not None and action_logprobs[stage] > prob_break_limit_ln:
+            if prob_break_limit_ln is not None and torch.all(action_logprobs[stage:] > prob_break_limit_ln):
                 shouldBreak = True
 
-            if (episode % print_step == (print_step-1)) or shouldBreak:
-                print("-"*40)
+            if (print_step is not None) and ((episode % print_step == (print_step-1)) or shouldBreak):
+                print("-"*20)
                 
 
-                print("iter ",iter," stage ",stage," ep ",episode, "  adversary: ", self.env.adversaryMode)
-                print("  actions: ", actions)
+                print("iter ",iter," stage ",stage," ep ",episode, "  adversary: ", self.env.adversary)
+                print("  actions: ", actions* self.actionStep)
 
-                print("loss= ", loss, "  ,  base rewards=",
-                      baseRewards, "return= ", returns)
+                print("loss= ", loss,"return= ", returns)
                 # print("states= ", states)
                 print("probs of actions: ", torch.exp(
                     action_logprobs))
                 # print("action_logprobs: ", action_logprobs)
                 # print("probs=", probs_lst)
                 # print("discounted returns: ", baseDiscReturns)
-                print("rewards: ", rewards)
-                print("finalReturns: ", finalReturns)
+                # print("rewards: ", rewards)
+                # print("finalReturns: ", finalReturns)
 
                 # print("nn 1st layer",self.policy[0].weight)
                 # print("nn 2nd layer",self.policy[2].weight)
@@ -266,16 +245,17 @@ class ReinforceAlgorithm(Solver):
             #         tmp = "{:.1f}".format(self.env.adversaryProbs[i])
             #         advModeNames += f"{(model.AdversaryModes(i)).name}-{tmp}-"
 
-            name = f"{self.env.advHistoryNum},[{self.neuralNetwork.lr},{self.gamma}]{str(options)},{int(time.time())}"
+            # name = f"{self.env.stateAdvHistory},{self.actionStep},[{self.neuralNetwork.lr},{self.gamma}]{str(options)},{int(time.time())}"
+            name = f"{(str(self.env.advMixedStrategy))},{int(time.time())}"
 
             # self.name = f"{[self.neuralNetwork.lr, self.gamma,clc]}-stage {stage}-{int(time.time())}"
             self.neuralNetwork.save(name=name)
             print(name, "saved")
-            # ep	adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	  num_actions   return_against_adversaries
-            new_row = [len(self.returns[iter]), str(self.env.adversaryProbs), returns, sum(self.env.profit[1]), loss.item(), self.neuralNetwork.lr, self.gamma, self.env.advHistoryNum, str(actions), str((torch.exp(action_logprobs)).detach().numpy()), name, self.env.T, self.neuralNetwork.num_actions]
+            # ep	adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	action_step  num_actions   return_against_adversaries
+            new_row = [len(self.returns[iter]), str(self.env.advMixedStrategy), returns, sum(self.env.profit[1]), loss.item(), self.neuralNetwork.lr, self.gamma, self.env.stateAdvHistory, str(actions*self.actionStep), str((torch.exp(action_logprobs)).detach().numpy()), name, self.env.T, self.neuralNetwork.action_step, self.neuralNetwork.num_actions]
 
-            for advmode in model.AdversaryModes:
-                new_row.append(np.array(self.playTrainedAgent(advmode,10)).mean())
+            # for advmode in model.AdversaryModes:
+            #     new_row.append(np.array((self.playTrainedAgent(advmode,10))[0]).mean())
 
             self.write_to_excel(new_row)
             
@@ -301,28 +281,30 @@ class ReinforceAlgorithm(Solver):
     # def myopic_price(demand,cost):
     #     return (demand + cost)/2
 
-    def playTrainedAgent(self, advMode, iterNum,options=[1, 1000, 1, 1]):
-        advProbs = torch.zeros(len(model.AdversaryModes))
-        advProbs[int(advMode.value)] = 1
+    def playTrainedAgent(self, adversary, iterNum):
+        """
+        Current trained NN will plays against the adversary's strategy, without learning.
+        """
+
         game = model.Model(totalDemand=self.env.totalDemand,
                            tupleCosts=self.env.costs,
-                           totalStages=self.env.T, advHistoryNum=self.env.advHistoryNum, adversaryProbs=advProbs)
-        returns = np.zeros(iterNum)
+                           totalStages=self.env.T, advMixedStrategy=adversary ,stateAdvHistory=self.neuralNetwork.adv_hist)
+        returns = torch.zeros(2,iterNum)
         for episode in range(iterNum):
 
-            episodeMemory = list()
+            # episodeMemory = list()
             state, reward, done = game.reset()
             retu = 0
 
             while not done:
                 prevState = state
-                normPrevState = self.normalizeState(prevState,mode=options[0])
+                normPrevState = self.env.normalizeState(prevState)
                 probs= self.policy(normPrevState)
                 distAction = Categorical(probs)
                 action = distAction.sample()
 
                 state, reward, done = game.step(
-                    prevState, action.item())
+                 game.compute_price(action=action.item(),actionStep=self.actionStep))
                 retu = retu + reward
                 # episodeMemory.append((normPrevState, action, reward))
 
@@ -333,7 +315,7 @@ class ReinforceAlgorithm(Solver):
             # print(f"iteration {episode} return= {retu} \n\t actions: {actions}")
 
             # sum of the our player's rewards  rounds 0-25
-            returns[episode] = retu
+            returns[0][episode], returns[1][episode] = sum(game.profit[0]), sum(game.profit[1])
         
         return returns
 
