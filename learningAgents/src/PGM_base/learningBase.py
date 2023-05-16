@@ -64,6 +64,8 @@ class ReinforceAlgorithm(Solver):
         # self.returns = np.zeros((numberIterations, numberEpisodes))
         # self.loss = np.zeros((numberIterations, numberEpisodes))
 
+        self.dataRow=[]
+
     def resetPolicyNet(self):
         """
             Reset Policy Neural Network.
@@ -238,28 +240,31 @@ class ReinforceAlgorithm(Solver):
                 # self.returns[iteration] = self.returns[iteration][0:episode]
                 # self.loss[iteration] = self.loss[iteration][0:episode]
                 break
-        if write_save:
-            # advModeNames = ""
-            # for i in range(len(self.env.adversaryProbs)):
-            #     if self.env.adversaryProbs[i] != 0:
-            #         tmp = "{:.1f}".format(self.env.adversaryProbs[i])
-            #         advModeNames += f"{(model.AdversaryModes(i)).name}-{tmp}-"
-
-            # name = f"{self.env.stateAdvHistory},{self.actionStep},[{self.neuralNetwork.lr},{self.gamma}]{str(options)},{int(time.time())}"
-            name = f"{(str(self.env.advMixedStrategy))},{int(time.time())}"
-
-            # self.name = f"{[self.neuralNetwork.lr, self.gamma,clc]}-stage {stage}-{int(time.time())}"
-            self.neuralNetwork.save(name=name)
-            print(name, "saved")
+        
+           
+        name = f"{int(time.time())}"
             # ep	adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	action_step  num_actions   return_against_adversaries
-            new_row = [len(self.returns[iter]), str(self.env.advMixedStrategy), returns, sum(self.env.profit[1]), loss.item(), self.neuralNetwork.lr, self.gamma, self.env.stateAdvHistory, str(actions*self.actionStep), str((torch.exp(action_logprobs)).detach().numpy()), name, self.env.T, self.neuralNetwork.action_step, self.neuralNetwork.num_actions]
+        self.dataRow= [len(self.returns[iter]), str(self.env.advMixedStrategy), returns, sum(self.env.profit[1]), loss.item(), self.neuralNetwork.lr, self.gamma, self.env.stateAdvHistory, str(actions*self.actionStep), str((torch.exp(action_logprobs)).detach().numpy()), name, self.env.T, self.neuralNetwork.action_step, self.neuralNetwork.num_actions]
 
+        self.neuralNetwork.nn_name=name
             # for advmode in model.AdversaryModes:
             #     new_row.append(np.array((self.playTrainedAgent(advmode,10))[0]).mean())
 
-            self.write_to_excel(new_row)
             
+            
+    def write_nn_data(self):
+        """
+        writes the data in excel and saves nn
+        """
+        
 
+            # self.name = f"{[self.neuralNetwork.lr, self.gamma,clc]}-stage {stage}-{int(time.time())}"
+        self.neuralNetwork.save()
+        print(self.neuralNetwork.nn_name, "saved")
+        # ep	adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	action_step  num_actions   return_against_adversaries
+        
+        self.write_to_excel(self.dataRow)
+        
         
 
     def computeBase(self, advPrices, startStage=0, initDemand=None):

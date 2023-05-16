@@ -1,14 +1,14 @@
 import BimatrixGame
-
+import globals
 from environmentModelBase import Model, Strategy, StrategyType,MixedStrategy
 from neuralNetworkSimple import NNBase
 import environmentModelBase as em
+import numpy as np
+
+np.random.seed(0)
 
 # const132=Strategy(StrategyType.static,name="const132",staticIndex=1)
-# const95=Strategy(StrategyType.static,"const95",staticIndex=2)
-# myopic=Strategy(StrategyType.static,"myopic",staticIndex=0)
-
-# mainGame=BimatrixGame()
+# const95=Strategy(StrategyType.static,"const95",staticIndex=2)  
 
 # mainGame._strategies.append(const132)
 # mainGame._strategies.append(const95)
@@ -36,4 +36,5 @@ import environmentModelBase as em
 # mainGame.fill_matrix()
 
 # mainGame.write_all_matrix()
-BimatrixGame.run_tournament(10)
+globals.initialize()
+equilibria, bimatrixGame=BimatrixGame.run_tournament(50)

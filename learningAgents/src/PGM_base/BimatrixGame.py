@@ -171,6 +171,7 @@ def training(costs, advMixedStrategy, targetPayoff):
                 (advMixedStrategy._strategyProbs[strategyIndex])
     if expectedPayoff > targetPayoff:
         acceptable = True
+        algorithm.write_nn_data()
         # compute the payoff against all adv strategies, to be added to the matrix
         for strategyIndex in range(len(advMixedStrategy._strategies)):
             if advMixedStrategy._strategyProbs[strategyIndex] == 0:
@@ -194,10 +195,12 @@ def support_count(list):
 
 def run_tournament(number_rounds):
     equilibria = []
-    low_cost_players = [Strategy(StrategyType.static, NNorFunc=em.myopic, name="myopic"), Strategy(
-        StrategyType.static, NNorFunc=em.const, name="const", firstPrice=132), Strategy(StrategyType.static, NNorFunc=em.guess, name="guess", firstPrice=132)]
-    high_cost_players = [Strategy(StrategyType.static, NNorFunc=em.myopic, name="myopic"), Strategy(
-        StrategyType.static, NNorFunc=em.const, name="const", firstPrice=132), Strategy(StrategyType.static, NNorFunc=em.guess, name="guess", firstPrice=132)]
+    neuralNet = NNBase(num_input=gl.totalStages+2+gl.adversaryHistroy,
+                       lr=gl.lr, num_actions=gl.numActions, action_step=gl.actionStep, adv_hist=gl.adversaryHistroy)
+    neuralNet.reset()
+    randStrategy=Strategy(StrategyType.neural_net, NNorFunc=neuralNet, name="nnRandom")
+    low_cost_players = [randStrategy]
+    high_cost_players = [randStrategy]
     bimatrixGame = BimatrixGame(low_cost_players, high_cost_players)
     # bimatrixGame.reset_matrix()
     bimatrixGame.fill_matrix()
@@ -236,5 +239,6 @@ def run_tournament(number_rounds):
             gl.numEpisodes = gl.numEpisodesReset
         else:
             gl.numEpisodes += 1000
+    return equilibria, bimatrixGame
 
  

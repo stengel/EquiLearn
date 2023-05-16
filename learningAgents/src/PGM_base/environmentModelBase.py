@@ -351,7 +351,8 @@ class MixedStrategy():
     def __str__(self) -> str:
         s = ""
         for i in range(len(self._strategies)):
-            s += f"{self._strategies[i]._name}-{str(self._strategyProbs[i])},"
+            if self._strategyProbs[i]>0:
+                s += f"{self._strategies[i]._name}-{self._strategyProbs[i]:.2f},"
         return s
 
 
