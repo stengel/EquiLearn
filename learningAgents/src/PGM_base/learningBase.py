@@ -49,7 +49,7 @@ class ReinforceAlgorithm(Solver):
         Model Solver.
     """
 
-    def __init__(self, Model, neuralNet, numberIterations, numberEpisodes, discountFactor,actionStep=1) -> None:
+    def __init__(self, Model, neuralNet, numberIterations, numberEpisodes, discountFactor) -> None:
         super().__init__(numberEpisodes, Model, discountFactor, numberIterations)
 
         self.env.adversaryReturns = np.zeros(numberEpisodes)
@@ -60,7 +60,7 @@ class ReinforceAlgorithm(Solver):
 
         self.returns = []
         self.loss = []
-        self.actionStep, self.neuralNetwork.action_step=actionStep, actionStep
+        
         # self.returns = np.zeros((numberIterations, numberEpisodes))
         # self.loss = np.zeros((numberIterations, numberEpisodes))
 
@@ -158,7 +158,7 @@ class ReinforceAlgorithm(Solver):
                 # print("probs= ", probs)
 
                 state, reward, done = self.env.step(
-                    self.env.compute_price(action=action.item(),actionStep=self.actionStep))
+                    self.env.compute_price(action=action.item(),actionStep=self.neuralNetwork.action_step))
                 returns = returns + reward
                 episodeMemory.append((normPrevState, action, reward))
 
@@ -244,7 +244,7 @@ class ReinforceAlgorithm(Solver):
            
         name = f"{int(time.time())}"
             # ep	adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	action_step  num_actions   return_against_adversaries
-        self.dataRow= [len(self.returns[iter]), str(self.env.advMixedStrategy), returns, sum(self.env.profit[1]), loss.item(), self.neuralNetwork.lr, self.gamma, self.env.stateAdvHistory, str(actions*self.actionStep), str((torch.exp(action_logprobs)).detach().numpy()), name, self.env.T, self.neuralNetwork.action_step, self.neuralNetwork.num_actions]
+        self.dataRow= [len(self.returns[iter]), str(self.env.advMixedStrategy), returns, sum(self.env.profit[1]), loss.item(), self.neuralNetwork.lr, self.gamma, self.env.stateAdvHistory, str(actions*self.neuralNetwork.action_step), str((torch.exp(action_logprobs)).detach().numpy()), name, self.env.T, self.neuralNetwork.action_step, self.neuralNetwork.num_actions]
 
         self.neuralNetwork.nn_name=name
             # for advmode in model.AdversaryModes:
@@ -252,14 +252,14 @@ class ReinforceAlgorithm(Solver):
 
             
             
-    def write_nn_data(self):
+    def write_nn_data(self,prefix=""):
         """
         writes the data in excel and saves nn
         """
         
 
             # self.name = f"{[self.neuralNetwork.lr, self.gamma,clc]}-stage {stage}-{int(time.time())}"
-        self.neuralNetwork.save()
+        self.neuralNetwork.save(f"{prefix},{self.neuralNetwork.nn_name}")
         print(self.neuralNetwork.nn_name, "saved")
         # ep	adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	action_step  num_actions   return_against_adversaries
         
@@ -309,7 +309,7 @@ class ReinforceAlgorithm(Solver):
                 action = distAction.sample()
 
                 state, reward, done = game.step(
-                 game.compute_price(action=action.item(),actionStep=self.actionStep))
+                 game.compute_price(action=action.item(),actionStep=self.neuralNetwork.action_step))
                 retu = retu + reward
                 # episodeMemory.append((normPrevState, action, reward))
 

@@ -88,12 +88,12 @@ class BimatrixGame():
             out.write(output)
 
     def add_low_cost_row(self, rowA, rowB):
-        self._matrix_A=np.append(self._matrix_A,[rowA],axis=0)
-        self._matrix_B=np.append(self._matrix_B,[rowB],axis=0)
+        self._matrix_A = np.append(self._matrix_A, [rowA], axis=0)
+        self._matrix_B = np.append(self._matrix_B, [rowB], axis=0)
 
     def add_high_cost_col(self, colA, colB):
-        self._matrix_A=np.hstack((self._matrix_A, np.atleast_2d(colA).T)) 
-        self._matrix_B=np.hstack((self._matrix_B, np.atleast_2d(colB).T)) 
+        self._matrix_A = np.hstack((self._matrix_A, np.atleast_2d(colA).T))
+        self._matrix_B = np.hstack((self._matrix_B, np.atleast_2d(colB).T))
         # for j in range(len(self._matrix_A)):
         #     self._matrix_A[j].append(colA[j])
         #     self._matrix_B[j].append(colB[j])
@@ -112,6 +112,11 @@ class BimatrixGame():
             self._matrix_A, np.transpose(high_cost_probabilities)))
         high_cost_payoff = np.matmul(low_cost_probabilities, np.matmul(
             self._matrix_B, np.transpose(high_cost_probabilities)))
+        
+        low_prob_str = ", ".join(map("{0:.2f}".format, low_cost_probabilities))
+        high_prob_str = ", ".join(map("{0:.2f}".format, high_cost_probabilities))
+        print(
+            f"equi: [{low_prob_str}], [{high_prob_str}], {low_cost_payoff:.2f}, {high_cost_payoff:.2f}")
         return low_cost_probabilities, high_cost_probabilities, low_cost_payoff, high_cost_payoff
 
 
@@ -136,8 +141,6 @@ def return_distribution(number_players, cost_probs, cost_support):
     return player_probabilities
 
 
-
-
 def training(costs, advMixedStrategy, targetPayoff):
     """
     trains a neuralnet against adversaries. if the expected payoff of new agent is greater than payoff, returns acceptable=true and the new strategy and payoff to be added to the the strategies and matrix.
@@ -155,7 +158,7 @@ def training(costs, advMixedStrategy, targetPayoff):
         game, neuralNet, numberIterations=1, numberEpisodes=numberEpisodes, discountFactor=gl.gamma)
     algorithm.solver(print_step=None, options=[
                      1, 10000, 1, 1], converge_break=True)
-    a=algorithm.returns[0][-1]
+    a = algorithm.returns[0][-1]
     print(f"{neuralNet.nn_name} is trained against {str(advMixedStrategy)}")
 
     agentPayoffs = np.zeros(len(advMixedStrategy._strategies))
@@ -171,7 +174,7 @@ def training(costs, advMixedStrategy, targetPayoff):
                 (advMixedStrategy._strategyProbs[strategyIndex])
     if expectedPayoff > targetPayoff:
         acceptable = True
-        algorithm.write_nn_data()
+        algorithm.write_nn_data(("low" if costs[0]<costs[1] else "high"))
         # compute the payoff against all adv strategies, to be added to the matrix
         for strategyIndex in range(len(advMixedStrategy._strategies)):
             if advMixedStrategy._strategyProbs[strategyIndex] == 0:
@@ -193,25 +196,28 @@ def support_count(list):
             counter += 1
     return counter
 
-def run_tournament(number_rounds):
+
+def run_tournament_random(number_rounds):
     equilibria = []
     neuralNet = NNBase(num_input=gl.totalStages+2+gl.adversaryHistroy,
                        lr=gl.lr, num_actions=gl.numActions, action_step=gl.actionStep, adv_hist=gl.adversaryHistroy)
     neuralNet.reset()
-    randStrategy=Strategy(StrategyType.neural_net, NNorFunc=neuralNet, name="nnRandom")
+    randStrategy = Strategy(StrategyType.neural_net,
+                            NNorFunc=neuralNet, name="nnRandom")
     low_cost_players = [randStrategy]
     high_cost_players = [randStrategy]
     bimatrixGame = BimatrixGame(low_cost_players, high_cost_players)
     # bimatrixGame.reset_matrix()
     bimatrixGame.fill_matrix()
+    low_cost_probabilities, high_cost_probabilities, low_cost_payoff, high_cost_payoff = bimatrixGame.compute_equilibria()
     for round in range(number_rounds):
         print("Round", round, " of ", number_rounds)
+
         update = False
 
-        low_cost_probabilities, high_cost_probabilities, low_cost_payoff, high_cost_payoff = bimatrixGame.compute_equilibria()
-        print("equi: ", low_cost_probabilities, high_cost_probabilities,low_cost_payoff, high_cost_payoff)
+        
         acceptable, agentPayoffs, advPayoffs, low_cost_player = training([gl.lowCost, gl.highCost], advMixedStrategy=MixedStrategy(
-                strategiesList=high_cost_players, probablitiesArray=high_cost_probabilities),targetPayoff= low_cost_payoff)
+            strategiesList=high_cost_players, probablitiesArray=high_cost_probabilities), targetPayoff=low_cost_payoff)
         if acceptable:
             update = True
             low_cost_players.append(low_cost_player)
@@ -221,9 +227,10 @@ def run_tournament(number_rounds):
             print(f"low cost player {low_cost_player._name} added")
 
             low_cost_probabilities, high_cost_probabilities, low_cost_payoff, high_cost_payoff = bimatrixGame.compute_equilibria()
-            print("equi: ", low_cost_probabilities, high_cost_probabilities,low_cost_payoff, high_cost_payoff)
+            
+
         acceptable, agentPayoffs, advPayoffs, high_cost_player = training(
-            [gl.highCost, gl.lowCost], advMixedStrategy=MixedStrategy(probablitiesArray= low_cost_probabilities, strategiesList=low_cost_players), targetPayoff= high_cost_payoff)
+            [gl.highCost, gl.lowCost], advMixedStrategy=MixedStrategy(probablitiesArray=low_cost_probabilities, strategiesList=low_cost_players), targetPayoff=high_cost_payoff)
 
         if acceptable:
             update = True
@@ -231,7 +238,7 @@ def run_tournament(number_rounds):
             bimatrixGame.add_high_cost_col(advPayoffs, agentPayoffs)
             equilibria.append(
                 [low_cost_probabilities, high_cost_probabilities, low_cost_payoff, high_cost_payoff])
-            print( f"high cost player {high_cost_player._name} added")
+            print(f"high cost player {high_cost_player._name} added")
 
             low_cost_probabilities, high_cost_probabilities, low_cost_payoff, high_cost_payoff = bimatrixGame.compute_equilibria()
 
@@ -240,5 +247,3 @@ def run_tournament(number_rounds):
         else:
             gl.numEpisodes += 1000
     return equilibria, bimatrixGame
-
- 
