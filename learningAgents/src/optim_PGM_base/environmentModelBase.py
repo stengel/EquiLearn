@@ -1,11 +1,7 @@
-# Francisco, Sahar, Edward
-# Contains Game Class and Model of the Game Class.
 
-from enum import Enum
 import torch
-import torch.nn as nn
-from torch.distributions import Categorical
-import sys  # Not used?
+
+
 import numpy as np  # numerical python
 import globals as gl
 
@@ -148,107 +144,9 @@ class Model(DemandPotentialGame):
     
 
 
-class StrategyType(Enum):
-    static = 0
-    neural_net = 1
 
 
-class Strategy():
-    """
-    strategies can be static or they can come from neural nets. If NN, policy is nn.policy o.w. the static function
-    """
-    type = None
-    env = None
-    name = None
-    nn = None
-    nn_hist = None
-    policy = None
 
-    def __init__(self, strategyType, NNorFunc, name, firstPrice=132) -> None:
-        """
-        Based on the type of strategy, the neuralnet or the Strategy Function  should be given as input. FirstPrice just applies to static strategies
-        """
-        self.type = strategyType
-        self.name = name
-        # self._env = environment
-
-        if strategyType == StrategyType.neural_net:
-            self.nn = NNorFunc
-            self.policy = NNorFunc.policy
-            self.nn_hist = NNorFunc.adv_hist
-        else:
-            self.policy = NNorFunc
-            self._firstPrice = firstPrice
-
-    def reset(self):
-        pass
-
-    def play(self, environment, player=0):
-        """
-            Computes the action to be played in the environment, nn.step_action is the step size for pricing less than myopic
-        """
-        self.env = environment
-        if self.type == StrategyType.neural_net:
-            state = self.env.getState(
-                self.env.stage, player, advHist=self.nn_hist)
-            normState = self.env.normalizeState(state=state)
-            probs = self.policy(normState)
-            distAction = Categorical(probs)
-            action = distAction.sample()
-            return self.env.compute_price(action=action.item(), actionStep=self.nn.action_step, player=player)
-
-        else:
-            return self.policy(self.env, player, self._firstPrice)
-
-    def play_against(self, env, adversary):
-        """ 
-        self is player 0 and adversary is layer 1. The environment should be specified. action_step for the neural netwroks should be set.
-        output: tuple (payoff of low cost, payoff of high cost)
-        """
-        self.env = env
-
-        state, reward, done = env.reset()
-        while env.stage < (env.T):
-            prices = [0, 0]
-            prices[0], prices[1] = self.play(env, 0), adversary.play(env, 1)
-            env.updatePricesProfitDemand(prices)
-            env.stage += 1
-
-        return [sum(env.profit[0]), sum(env.profit[1])]
-
-    def to_mixed_strategy(self):
-        """
-        Returns a MixedStrategy, Pr(self)=1
-        """
-        mix = MixedStrategy(probablitiesArray=torch.ones(1),
-                            strategiesList=[self])
-
-        return mix
-
-
-class MixedStrategy():
-    _strategies = []
-    _strategyProbs = None
-
-    def __init__(self, strategiesList=[], probablitiesArray=None) -> None:
-        self._strategies = strategiesList
-        self._strategyProbs = probablitiesArray
-
-    def set_adversary_strategy(self):
-        if len(self._strategies) > 0:
-            adversaryDist = Categorical(torch.tensor(self._strategyProbs))
-            strategyInd = (adversaryDist.sample()).item()
-            return self._strategies[strategyInd]
-        else:
-            print("adversary's strategy can not be set!")
-            return None
-
-    def __str__(self) -> str:
-        s = ""
-        for i in range(len(self._strategies)):
-            if self._strategyProbs[i] > 0:
-                s += f"{self._strategies[i]._name}-{self._strategyProbs[i]:.2f},"
-        return s
 
 
 def myopic(env, player, firstprice=0):

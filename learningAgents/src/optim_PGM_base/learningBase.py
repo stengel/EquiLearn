@@ -1,10 +1,9 @@
-# Francisco, Sahar, Edward
-# ReinforceAlgorithm Class: Solver.
+
 import environmentModelBase as model
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
-import sys
+from enum import Enum
 import numpy as np  # numerical python
 from openpyxl import load_workbook
 import time
@@ -12,6 +11,7 @@ import globals as gl
 from collections import deque, namedtuple
 import random
 from multiprocessing import Pool
+
 # printoptions: output limited to 2 digits after decimal point
 np.set_printoptions(precision=2, suppress=False)
 
@@ -110,14 +110,16 @@ class ReinforceAlgorithm(Solver):
             Method that just learns the actions of stages after the input stage. 
 
         """
-        buffer_loss = play_from_buffer(stage=stage, replay_buffer=replay_buffer, episodes=int(
-            gl.buffer_play_coefficient*episodes))
-        for loss in buffer_loss:
-            self.policy.zero_grad()
-            loss.backward()
-            self.optim.step()
+        if stage<gl.total_stages-1:
+            buffer_loss = play_from_buffer(stage=stage, replay_buffer=replay_buffer, episodes=int(
+                gl.buffer_play_coefficient*episodes))
+            for loss in buffer_loss:
+                self.policy.zero_grad()
+                loss.backward()
+                self.optim.step()
+        new_espisodes=int((1-gl.buffer_play_coefficient)*episodes) if (stage<gl.total_stages-1) else episodes
 
-        for episode in range(int((1-gl.buffer_play_coefficient)*episodes)):
+        for episode in range(new_espisodes):
 
             episode_memory = list()
             state, reward, done = self.env.reset()
@@ -125,7 +127,7 @@ class ReinforceAlgorithm(Solver):
             probs_lst = []
             while not done:
                 prev_state = state
-                norm_prev_state = self.env.normalizeState(prev_state)
+                norm_prev_state = normalize_state(prev_state)
                 probs = self.policy(norm_prev_state)
                 dist_action = Categorical(probs)
                 probs_lst.append(probs)
@@ -137,23 +139,24 @@ class ReinforceAlgorithm(Solver):
                 # print("probs= ", probs)
 
                 state, reward, done = self.env.step(
-                    compute_price(self.env.demandPotential[0][self.env.stage], self.env.costs[0], action=action.item(), actionStep=self.neuralNetwork.action_step))
+                    compute_price(self.env.demandPotential[0][self.env.stage], self.env.costs[0], action=action.item(), action_step=gl.action_step))
                 returns = returns + reward
                 episode_memory.append((norm_prev_state, action, reward))
 
             # states = torch.stack([item[0] for item in episode_memory])
             actions = torch.tensor([item[1] for item in episode_memory])
             rewards = torch.tensor([item[2]
-                                   for item in episode_memory])/gl.rewardsDivisionConst
+                                   for item in episode_memory])/gl.rewards_division_const
 
             action_probs = torch.stack(probs_lst)
             action_dists = Categorical(action_probs)
 
             action_log_probs = action_dists.log_prob(actions)
+            replay_buffer.add_game(action_log_probs, self.env.costs[0], self.env.demandPotential[0], self.env.prices[1],  rewards)
 
             action_log_probs_cut = action_log_probs[stage:]
             base_disc_returns = returns_computation(rewards=rewards) - (compute_base(
-                agent_cost=self.costs[0], adv_prices=self.env.prices[1], stage_demand=self.env.demandPotential[0][stage], start_stage=stage)/gl.rewardsDivisionConst)
+                agent_cost=self.costs[0], adv_prices=self.env.prices[1], stage_demand=self.env.demandPotential[0][stage], start_stage=stage)/gl.rewards_division_const)
             final_returns = base_disc_returns[stage:]
 
             # if just_stage:
@@ -213,9 +216,9 @@ class ReinforceAlgorithm(Solver):
         name = f"{int(time.time())}"
         # ep	adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	action_step  num_actions   return_against_adversaries
         self.dataRow = [len(self.returns[iter]), str(self.env.advMixedStrategy), returns, sum(self.env.profit[1]), loss.item(), self.neuralNetwork.lr, self.gamma, self.env.stateAdvHistory, str(
-            actions*self.neuralNetwork.action_step), str((torch.exp(action_log_probs)).detach().numpy()), name, self.env.T, self.neuralNetwork.action_step, self.neuralNetwork.num_actions]
+            actions*gl.action_step), str((torch.exp(action_log_probs)).detach().numpy()), name, self.env.T, gl.action_step, self.neuralNetwork.num_actions]
 
-        self.neuralNetwork.nn_name = name
+        self.neuralNetwork.name = name
         # for advmode in model.AdversaryModes:
         #     new_row.append(np.array((self.playTrainedAgent(advmode,10))[0]).mean())
 
@@ -225,8 +228,8 @@ class ReinforceAlgorithm(Solver):
         """
 
         # self.name = f"{[self.neuralNetwork.lr, self.gamma,clc]}-stage {stage}-{int(time.time())}"
-        self.neuralNetwork.save(f"{prefix}_{self.neuralNetwork.nn_name}")
-        print(self.neuralNetwork.nn_name, "saved")
+        self.neuralNetwork.save(f"{prefix}_{self.neuralNetwork.name}")
+        print(self.neuralNetwork.name, "saved")
         # ep	adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	action_step  num_actions   return_against_adversaries
 
         self.write_to_excel(self.dataRow)
@@ -251,13 +254,13 @@ class ReinforceAlgorithm(Solver):
 
             while not done:
                 prevState = state
-                normPrevState = self.env.normalizeState(prevState)
+                normPrevState = normalize_state(prevState)
                 probs = self.policy(normPrevState)
                 distAction = Categorical(probs)
                 action = distAction.sample()
 
                 state, reward, done = game.step(
-                    compute_price(game.demandPotential[0][game.stage], game.costs[0], action=action.item(), actionStep=self.neuralNetwork.action_step))
+                    compute_price(game.demandPotential[0][game.stage], game.costs[0], action=action.item(), action_step=gl.action_step))
                 retu = retu + reward
                 # episodeMemory.append((normPrevState, action, reward))
 
@@ -276,7 +279,106 @@ class ReinforceAlgorithm(Solver):
         # plt.plot(returns)
         # plt.show()
 
+class Strategy():
+    """
+    strategies can be static or they can come from neural nets. If NN, policy is nn.policy o.w. the static function
+    """
+    type = None
+    env = None
+    name = None
+    nn = None
+    nn_hist = None
+    policy = None
 
+    def __init__(self, strategyType, NNorFunc, name, firstPrice=132) -> None:
+        """
+        Based on the type of strategy, the neuralnet or the Strategy Function  should be given as input. FirstPrice just applies to static strategies
+        """
+        self.type = strategyType
+        self.name = name
+        # self._env = environment
+
+        if strategyType == StrategyType.neural_net:
+            self.nn = NNorFunc
+            self.policy = NNorFunc.policy
+            self.nn_hist = gl.num_adv_history
+        else:
+            self.policy = NNorFunc
+            self._firstPrice = firstPrice
+
+    def reset(self):
+        pass
+
+    def play(self, environment, player=0):
+        """
+            Computes the action to be played in the environment, nn.step_action is the step size for pricing less than myopic
+        """
+        self.env = environment
+        if self.type == StrategyType.neural_net:
+            state = self.env.get_state(
+                self.env.stage, player, adv_hist=gl.num_adv_history)
+            normState = normalize_state(state=state)
+            probs = self.policy(normState)
+            distAction = Categorical(probs)
+            action = distAction.sample()
+            return compute_price( action=action.item(), action_step=gl.action_step,demand=self.env.demandPotential[player][self.env.stage],cost=self.env.costs[player])
+
+        else:
+            return self.policy(self.env, player, self._firstPrice)
+
+    def play_against(self, env, adversary):
+        """ 
+        self is player 0 and adversary is layer 1. The environment should be specified. action_step for the neural netwroks should be set.
+        output: tuple (payoff of low cost, payoff of high cost)
+        """
+        self.env = env
+
+        state, reward, done = env.reset()
+        while env.stage < (env.T):
+            prices = [0, 0]
+            prices[0], prices[1] = self.play(env, 0), adversary.play(env, 1)
+            env.updatePricesProfitDemand(prices)
+            env.stage += 1
+
+        return [sum(env.profit[0]), sum(env.profit[1])]
+
+    def to_mixed_strategy(self):
+        """
+        Returns a MixedStrategy, Pr(self)=1
+        """
+        mix = MixedStrategy(probablitiesArray=torch.ones(1),
+                            strategiesList=[self])
+
+        return mix
+
+
+class MixedStrategy():
+    _strategies = []
+    _strategyProbs = None
+
+    def __init__(self, strategiesList=[], probablitiesArray=None) -> None:
+        self._strategies = strategiesList
+        self._strategyProbs = probablitiesArray
+
+    def set_adversary_strategy(self):
+        if len(self._strategies) > 0:
+            adversaryDist = Categorical(torch.tensor(self._strategyProbs))
+            strategyInd = (adversaryDist.sample()).item()
+            return self._strategies[strategyInd]
+        else:
+            print("adversary's strategy can not be set!")
+            return None
+
+    def __str__(self) -> str:
+        s = ""
+        for i in range(len(self._strategies)):
+            if self._strategyProbs[i] > 0:
+                s += f"{self._strategies[i].name}-{self._strategyProbs[i]:.2f},"
+        return s
+    
+class StrategyType(Enum):
+    static = 0
+    neural_net = 1
 class ReplayBuffer():
     """
         the information of one round of game that is needed for creating the states later, update the nn and compute_base will be saved in buffer. The len of each input array is total_stages
@@ -285,16 +387,17 @@ class ReplayBuffer():
     def __init__(self, max_len):
 
         self.deque = deque([], maxlen=max_len)
-        self.entry = namedtuple("Entry", field_names=[
-                                "action_log_probs", "agent_cost", "agent_demands", "adv_prices", "rewards"])
+        # self.entry = namedtuple("Entry", field_names=[
+        #                         "action_log_probs", "agent_cost", "agent_demands", "adv_prices", "rewards"])
 
     def add_game(self, actions_log_prob, agent_cost, agent_demands, adv_prices,  rewards):
-        entry = self.entry(action_log_probs=actions_log_prob, agent_cost=agent_cost,
-                           agent_demands=agent_demands, adv_prices=adv_prices, rewards=rewards)
+        # entry = self.entry(action_log_probs=actions_log_prob, agent_cost=agent_cost,
+        #                    agent_demands=agent_demands, adv_prices=adv_prices, rewards=rewards)
+        entry = (actions_log_prob, agent_cost, agent_demands, adv_prices, rewards)
         self.deque.append(entry)
 
     def sample_game(self, sample_size):
-        """ return samples of tuples=(agent_demands, agent_prices, adv_prices, actions_log_prob, rewards)"""
+        """ return samples of tuples=("action_log_probs", "agent_cost", "agent_demands", "adv_prices", "rewards")"""
 
         return random.sample(self.deque, sample_size)
 
@@ -303,15 +406,15 @@ def normalize_state(state):
     # [stage one-hot encoded, agent's demand potential, agent's last price, history of adversary's prices]
 
     normalized = [0]*len(state)
-    for i in range(gl.totalStages):
+    for i in range(gl.total_stages):
         normalized[i] = state[i]
-    for i in range(gl.totalStages, len(state)):
-        normalized[i] = state[i]/(self.totalDemand)
+    for i in range(gl.total_stages, len(state)):
+        normalized[i] = state[i]/(gl.total_demand)
     return torch.tensor(normalized)
 
 
-def compute_price(demand, cost, action, actionStep):
-    return model.monopolyPrice(demand, cost) - (actionStep * action)
+def compute_price(demand, cost, action, action_step):
+    return model.monopolyPrice(demand, cost) - (action_step * action)
 
 
 def returns_computation(rewards):
@@ -356,14 +459,15 @@ def play_from_buffer(stage, replay_buffer, episodes):
 
 
 def compute_buffer_update(stage, samples):
-    # field_names=["action_log_probs","agent_cost", "agent_demands", "adv_prices", "rewards"]
+    # field_names=["action_log_probs 0","agent_cost 1", "agent_demands 2", "adv_prices 3", "rewards 4"]
     loss = []
     for sample in samples:
-        action_log_probs_cut = sample.actions_log_probs[stage:]
-        base_disc_returns = returns_computation(rewards=sample.rewards) - (compute_base(agent_cost=sample.agent_cost,
-                                                                                        stage_demand=sample.demands[stage], adv_prices=samples.adv_prices, start_stage=stage)/gl.rewardsDivisionConst)
+        action_log_probs_cut = (sample[0])[stage:]
+        base_disc_returns = returns_computation(rewards=sample[4]) - (compute_base(agent_cost=sample[1],
+                                                                                        stage_demand=(sample[2])[stage], adv_prices=samples[3], start_stage=stage)/gl.rewardsDivisionConst)
         final_returns = base_disc_returns[stage:]
 
         loss.append(-(torch.sum(final_returns*action_log_probs_cut)))
 
     return loss
+
