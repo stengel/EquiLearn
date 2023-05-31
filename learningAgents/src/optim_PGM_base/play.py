@@ -1,6 +1,8 @@
 import BimatrixGame
-import globals
-
+import globals as gl
+from environmentModelBase import Model
+from learningBase import ReinforceAlgorithm, MixedStrategy, Strategy, StrategyType
+from neuralNetworkSimple import NNBase
 import numpy as np
 
 
@@ -36,5 +38,13 @@ import numpy as np
 # mainGame.write_all_matrix()
 if __name__ == '__main__':
     np.random.seed(0)
-    globals.initialize()
-    equilibria, bimatrix_game=BimatrixGame.run_tournament_random(2)
+    gl.initialize()
+    neural_net = NNBase(num_input=gl.total_stages+2+gl.num_adv_history,
+                        lr=gl.lr, num_actions=gl.num_actions)
+    neural_net.reset()
+    rand_strategy = Strategy(StrategyType.neural_net,
+                             NNorFunc=neural_net, name="nnRandom")
+    low_strategies = [rand_strategy]
+    high_strategies = [rand_strategy]
+    bimatrix_game = BimatrixGame.BimatrixGame(low_strategies, high_strategies)
+    equilibria=BimatrixGame.run_tournament(bimatrix_game=bimatrix_game,number_rounds= 100)

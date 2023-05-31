@@ -139,7 +139,7 @@ class Model(DemandPotentialGame):
         num_adv_hist = adv_hist if (
             adv_hist is not None) else self.stateAdvHistory
 
-        return define_state(stage, self.totalDemand, self.T, self.costs[player], self.costs[1-player], self.prices[player], self.prices[1-player], self.demandPotential[player], num_adv_hist)
+        return define_state(stage, self.totalDemand, self.T, self.costs[player], self.prices[player], self.prices[1-player], self.demandPotential[player], num_adv_hist)
 
     
 
@@ -255,7 +255,7 @@ def guess(env, player, firstprice):  # predictive fighting strategy
     return P
 
 
-def define_state(stage, total_demand, total_stages, agent_cost, adv_cost, agent_prices, adv_prices, agent_demands, num_adv_hist):
+def define_state(stage, total_demand, total_stages, agent_cost, agent_prices, adv_prices, agent_demands, num_adv_hist):
     # [one-hote encoding of stage, our demand, our price, adversary's price history]
 
     stageEncode = [0]*total_stages

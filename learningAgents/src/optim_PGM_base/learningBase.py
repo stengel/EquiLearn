@@ -97,29 +97,39 @@ class ReinforceAlgorithm(Solver):
             self.loss.append([])
 
             for stage in range(self.env.T-1, -1, -1):
-                self.learn_stage_onwards(replay_buffer=replay_buffer, iter=iter, stage=stage, episodes=int(
-                    self.numberEpisodes*(self.env.T-stage)))
+                episodes = self.compute_num_episodes(stage)
+                if stage < self.env.T-1:
+                    self.play_from_buffer(stage=stage, replay_buffer=replay_buffer, episodes=int(
+                        gl.buffer_play_coefficient*episodes))
+
+                new_espisodes = int((1-gl.buffer_play_coefficient) *
+                                    episodes) if (stage < gl.total_stages-1) else episodes
+
+                self.learn_stage_onwards(
+                    iter=iter, stage=stage, episodes=new_espisodes, replay_buffer=replay_buffer)
 
             # axs[iter][0].scatter(range(len(self.returns[iter])), self.returns[iter])
             # axs[iter][1].scatter(range(len(self.loss[iter])), self.loss[iter])
 
         # plt.show()
 
-    def learn_stage_onwards(self, replay_buffer, iter, stage, episodes):
+    def compute_num_episodes(self, stage):
+        return int(self.numberEpisodes*((gl.total_stages-stage)**1.5))
+
+    def learn_stage_onwards(self, iter, stage, episodes, replay_buffer):
         """
             Method that just learns the actions of stages after the input stage. 
 
         """
-        if stage<gl.total_stages-1:
-            buffer_loss = play_from_buffer(stage=stage, replay_buffer=replay_buffer, episodes=int(
-                gl.buffer_play_coefficient*episodes))
-            for loss in buffer_loss:
-                self.policy.zero_grad()
-                loss.backward()
-                self.optim.step()
-        new_espisodes=int((1-gl.buffer_play_coefficient)*episodes) if (stage<gl.total_stages-1) else episodes
+        # if stage<gl.total_stages-1:
+        #     buffer_loss = play_from_buffer(stage=stage, replay_buffer=replay_buffer, episodes=int(
+        #         gl.buffer_play_coefficient*episodes))
+        #     for loss in buffer_loss:
+        #         self.policy.zero_grad()
+        #         loss.backward()
+        #         self.optim.step()
 
-        for episode in range(new_espisodes):
+        for episode in range(episodes):
 
             episode_memory = list()
             state, reward, done = self.env.reset()
@@ -152,7 +162,8 @@ class ReinforceAlgorithm(Solver):
             action_dists = Categorical(action_probs)
 
             action_log_probs = action_dists.log_prob(actions)
-            replay_buffer.add_game(action_log_probs, self.env.costs[0], self.env.demandPotential[0], self.env.prices[1],  rewards)
+            replay_buffer.add_game(
+                actions, self.env.demandPotential[0], self.env.prices[0], self.env.prices[1],  rewards)
 
             action_log_probs_cut = action_log_probs[stage:]
             base_disc_returns = returns_computation(rewards=rewards) - (compute_base(
@@ -162,7 +173,7 @@ class ReinforceAlgorithm(Solver):
             # if just_stage:
             #     loss = -baseDiscReturns[stage]*action_logprobs[stage]
             # else:
-            loss = -(torch.sum(final_returns*action_log_probs_cut))
+            loss = loss_function(final_returns, action_log_probs_cut)
 
             should_break = False
 
@@ -222,6 +233,28 @@ class ReinforceAlgorithm(Solver):
         # for advmode in model.AdversaryModes:
         #     new_row.append(np.array((self.playTrainedAgent(advmode,10))[0]).mean())
 
+    def play_from_buffer(self, stage, replay_buffer, episodes):
+
+        samples = replay_buffer.sample_game(episodes)
+        # # field_names==["0 actions", "1 agent_demands", "2 agent_prices","3 adv_prices", "4 rewards"]
+        for sample in samples:
+            action_log_probs_cut=[]
+            for s in range(stage, gl.total_stages):
+                state =model.define_state(s, gl.total_demand, gl.total_stages,
+                                   self.costs[0], sample[2], sample[3], sample[1], gl.num_adv_history)
+                norm_state = normalize_state(state)
+                probs = self.policy(norm_state)
+                dist_action = Categorical(probs)
+                action_log_probs_cut.append(dist_action.log_prob((sample[0])[s]))
+            
+            base_disc_returns = returns_computation(rewards=sample[4]) - (compute_base(agent_cost=self.costs[0],
+                                                                                       stage_demand=(sample[1])[stage], adv_prices=sample[3], start_stage=stage)/gl.rewards_division_const)
+        
+            loss = loss_function(base_disc_returns[stage:], torch.stack(action_log_probs_cut))
+            self.policy.zero_grad()
+            loss.backward()
+            self.optim.step()
+
     def write_nn_data(self, prefix=""):
         """
         writes the data in excel and saves nn
@@ -244,7 +277,7 @@ class ReinforceAlgorithm(Solver):
 
         game = model.Model(totalDemand=self.env.totalDemand,
                            tupleCosts=self.env.costs,
-                           totalStages=self.env.T, advMixedStrategy=adversary, stateAdvHistory=self.neuralNetwork.adv_hist)
+                           totalStages=self.env.T, advMixedStrategy=adversary, stateAdvHistory=gl.num_adv_history)
         returns = torch.zeros(2, iterNum)
         for episode in range(iterNum):
 
@@ -278,6 +311,7 @@ class ReinforceAlgorithm(Solver):
 
         # plt.plot(returns)
         # plt.show()
+
 
 class Strategy():
     """
@@ -321,7 +355,7 @@ class Strategy():
             probs = self.policy(normState)
             distAction = Categorical(probs)
             action = distAction.sample()
-            return compute_price( action=action.item(), action_step=gl.action_step,demand=self.env.demandPotential[player][self.env.stage],cost=self.env.costs[player])
+            return compute_price(action=action.item(), action_step=gl.action_step, demand=self.env.demandPotential[player][self.env.stage], cost=self.env.costs[player])
 
         else:
             return self.policy(self.env, player, self._firstPrice)
@@ -362,7 +396,10 @@ class MixedStrategy():
 
     def set_adversary_strategy(self):
         if len(self._strategies) > 0:
-            adversaryDist = Categorical(torch.tensor(self._strategyProbs))
+            # adversaryDist = Categorical(torch.tensor(self._strategyProbs))
+            if not torch.is_tensor(self._strategyProbs):
+                self._strategyProbs=torch.tensor(self._strategyProbs)
+            adversaryDist = Categorical(self._strategyProbs)
             strategyInd = (adversaryDist.sample()).item()
             return self._strategies[strategyInd]
         else:
@@ -375,10 +412,13 @@ class MixedStrategy():
             if self._strategyProbs[i] > 0:
                 s += f"{self._strategies[i].name}-{self._strategyProbs[i]:.2f},"
         return s
-    
+
+
 class StrategyType(Enum):
     static = 0
     neural_net = 1
+
+
 class ReplayBuffer():
     """
         the information of one round of game that is needed for creating the states later, update the nn and compute_base will be saved in buffer. The len of each input array is total_stages
@@ -387,19 +427,17 @@ class ReplayBuffer():
     def __init__(self, max_len):
 
         self.deque = deque([], maxlen=max_len)
-        # self.entry = namedtuple("Entry", field_names=[
-        #                         "action_log_probs", "agent_cost", "agent_demands", "adv_prices", "rewards"])
+        # self.entry = namedtuple("Entry", field_names=["0 actions", "1 agent_demands", "2 agent_prices","3 adv_prices", "4 rewards"])
 
-    def add_game(self, actions_log_prob, agent_cost, agent_demands, adv_prices,  rewards):
-        # entry = self.entry(action_log_probs=actions_log_prob, agent_cost=agent_cost,
-        #                    agent_demands=agent_demands, adv_prices=adv_prices, rewards=rewards)
-        entry = (actions_log_prob, agent_cost, agent_demands, adv_prices, rewards)
+    def add_game(self, actions, agent_demands, agent_prices, adv_prices,  rewards):
+        # self.entry = namedtuple("Entry", field_names=["0 actions", "1 agent_demands", "2 agent_prices","3 adv_prices", "4 rewards"])
+        entry = (actions,agent_demands, agent_prices, adv_prices, rewards)
         self.deque.append(entry)
 
     def sample_game(self, sample_size):
-        """ return samples of tuples=("action_log_probs", "agent_cost", "agent_demands", "adv_prices", "rewards")"""
+        """ return samples of tuples=(["0 actions", "1 agent_demands", "2 agent_prices","3 adv_prices", "4 rewards"])"""
 
-        return random.sample(self.deque, sample_size)
+        return random.sample(self.deque, min(sample_size, len(self.deque)))
 
 
 def normalize_state(state):
@@ -441,33 +479,36 @@ def compute_base(agent_cost, adv_prices, start_stage=0, stage_demand=None):
     demand = stage_demand
     for i in range(start_stage, gl.total_stages):
         price = (demand + agent_cost)/2
-
+        a = (demand-price)*(price-agent_cost)
         profit[i] = (demand-price)*(price-agent_cost)
         demand += (adv_prices[i]-price)/2
     return returns_computation(rewards=profit)
 
 
-def play_from_buffer(stage, replay_buffer, episodes):
+# def play_from_buffer(stage, replay_buffer, episodes):
 
-    with Pool() as pool:
-        samples = [replay_buffer.sample_game(
-            int(episodes/gl.num_cores)) for _ in range(gl.num_cores)]
-        stage_repeat = [stage]*gl.num_cores
-        results = pool.starmap(compute_buffer_update,
-                               zip(stage_repeat, samples))
-    return results
+#     with Pool() as pool:
+#         samples = [replay_buffer.sample_game(
+#             int(episodes/gl.num_cores)) for _ in range(gl.num_cores)]
+#         stage_repeat = [stage]*gl.num_cores
+#         results = pool.starmap(compute_buffer_update,
+#                                zip(stage_repeat, samples))
+#     return results
 
 
-def compute_buffer_update(stage, samples):
-    # field_names=["action_log_probs 0","agent_cost 1", "agent_demands 2", "adv_prices 3", "rewards 4"]
-    loss = []
-    for sample in samples:
-        action_log_probs_cut = (sample[0])[stage:]
-        base_disc_returns = returns_computation(rewards=sample[4]) - (compute_base(agent_cost=sample[1],
-                                                                                        stage_demand=(sample[2])[stage], adv_prices=samples[3], start_stage=stage)/gl.rewardsDivisionConst)
-        final_returns = base_disc_returns[stage:]
+# def compute_buffer_update(stage, samples):
+    # # field_names=["action_log_probs 0","agent_cost 1", "agent_demands 2", "adv_prices 3", "rewards 4"]
+    # loss = []
+    # for sample in samples:
+    #     action_log_probs_cut = (sample[0])[stage:]
+    #     base_disc_returns = returns_computation(rewards=sample[4]) - (compute_base(agent_cost=sample[1],
+    #                                                                                     stage_demand=(sample[2])[stage], adv_prices=samples[3], start_stage=stage)/gl.rewardsDivisionConst)
+    #     final_returns = base_disc_returns[stage:]
 
-        loss.append(-(torch.sum(final_returns*action_log_probs_cut)))
+    #     loss.append(-(torch.sum(final_returns*action_log_probs_cut)))
 
-    return loss
+    # return loss
 
+def loss_function(returns, log_probs):
+
+    return -(torch.sum(returns*log_probs))

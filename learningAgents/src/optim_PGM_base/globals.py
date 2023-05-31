@@ -9,6 +9,7 @@ def initialize():
     high_cost = 71
     total_stages = 25
     num_adv_history = 3
+    # lr = 0.0005
     lr = 0.000005
     gamma = 1
     num_actions = 20
@@ -17,7 +18,7 @@ def initialize():
     rewards_division_const = 10000
 
     # episodes for learning the last stage, then for 2nd to last stage 2*numEpisodes. In total:300*numEpisodes
-    num_episodes = 2000
+    num_episodes = 1000
     num_episodes_reset = num_episodes
     # increase in num of episodes for each adv in support
     episode_adv_increase = 1000
