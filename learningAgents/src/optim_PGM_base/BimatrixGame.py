@@ -63,8 +63,10 @@ class BimatrixGame():
                     totalStages=gl.total_stages, advMixedStrategy=stratH.to_mixed_strategy())
         payoffs = [stratL.play_against(env, stratH)
                    for _ in range(gl.num_stochastic_iter)]
-        self.matrix_A[lowIndex][highIndex], self.matrix_B[lowIndex][highIndex] = (sum(
-            payoffs[:][0])/gl.num_stochastic_iter), (sum(payoffs[:][1])/gl.num_stochastic_iter)
+        
+        mean_payoffs=(np.mean(np.array(payoffs), axis=0)).tolist()
+
+        self.matrix_A[lowIndex][highIndex], self.matrix_B[lowIndex][highIndex] = mean_payoffs[0], mean_payoffs[1]
 
     def write_all_matrix(self):
         # print("A: \n", self._matrix_A)

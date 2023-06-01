@@ -25,24 +25,24 @@ l1.load("low,1684386202")
 # h1=NNBase(lr=gl.lr, num_input=gl.totalStages+2+gl.adversaryHistroy,num_actions=gl.numActions,adv_hist=gl.adversaryHistroy,action_step=gl.actionStep)
 # h1.load("high,1684261807")
 equilibria = []
-low_cost_players = [
+bimatrix_game.low_strategies = [
                     # Strategy(StrategyType.static, NNorFunc=myopic19, name="myopic19")
                     # Strategy(StrategyType.static, NNorFunc=em.const, name="const", firstPrice=132), 
                     # Strategy(StrategyType.static, NNorFunc=em.guess, name="guess", firstPrice=132),
                     Strategy(StrategyType.neural_net, NNorFunc=l1, name=l1.name)
                     # Strategy(StrategyType.neural_net, NNorFunc=l2, name=l2.nn_name)
                    ]
-high_cost_players = [
+bimatrix_game.high_strategies = [
                     Strategy(StrategyType.static, NNorFunc=em.myopic, name="myopic") ,
                     Strategy(StrategyType.static, NNorFunc=em.const, name="const", firstPrice=132), 
                     Strategy(StrategyType.static, NNorFunc=em.guess, name="guess", firstPrice=132),
                     # Strategy(StrategyType.neural_net, NNorFunc=h1, name=h1.nn_name),
                    ]
-bimatrix_game = BG.BimatrixGame(low_cost_players, high_cost_players)
+bimatrix_game = BG.BimatrixGame(bimatrix_game.low_strategies, bimatrix_game.high_strategies)
     # bimatrixGame.reset_matrix()
 bimatrix_game.fill_matrix()
-print(bimatrix_game._matrix_A)
-print(bimatrix_game._matrix_B)
+print(bimatrix_game.matrix_A)
+print(bimatrix_game.matrix_B)
 # low_cost_probabilities, high_cost_probabilities, low_cost_payoff, high_cost_payoff = bimatrixGame.compute_equilibria()
 # for round in range(number_rounds):
 #     print("Round", round, " of ", number_rounds)

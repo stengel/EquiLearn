@@ -114,7 +114,7 @@ class ReinforceAlgorithm(Solver):
         # plt.show()
 
     def compute_num_episodes(self, stage):
-        return int(self.numberEpisodes*((gl.total_stages-stage)**1.5))
+        return int(self.numberEpisodes*((gl.total_stages-stage)))
 
     def learn_stage_onwards(self, iter, stage, episodes, replay_buffer):
         """

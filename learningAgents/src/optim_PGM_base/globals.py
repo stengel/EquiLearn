@@ -18,12 +18,12 @@ def initialize():
     rewards_division_const = 10000
 
     # episodes for learning the last stage, then for 2nd to last stage 2*numEpisodes. In total:300*numEpisodes
-    num_episodes = 1000
+    num_episodes = 2000
     num_episodes_reset = num_episodes
     # increase in num of episodes for each adv in support
     episode_adv_increase = 1000
 
-    replay_buffer_size= 500_000
+    replay_buffer_size= 100_000
 
     prob_break_limit_ln=-0.001
     converge_break=True
