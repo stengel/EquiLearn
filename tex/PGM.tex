@@ -142,7 +142,22 @@
 	
 	Since the number of states in our model is large, we need a function approximator to to parametrize the action preferences. We use a artificial neural network for this purpose and we show the vector of connection weights in our network as $ \theta $.
 	
-	The actions at each state are chosen using in a way that action with higher valuation is more likely to be chosen
+	The actions at each state are chosen in a way that action with higher valuation is more likely to be chosen. 
+	
+	\subsection{Action space} 
+	
+	The reward in each stage of the multi-round pricing game is determined by $ (D_i-P)\times(P-C) $ in which $ D_i $ is the agent's demand potential at the start of stage i and $ C $ is the agent's product cost. $ P^* = \frac{D_i + C}{2} $ maximises this quadratic concave function; we refer to $ P^* $ as \textit{myopic price} or \textit{monopoly price} at stage i. Playing the myopic price results in maximum payoff at the current stage but the demand potential for the next round would be affected, meaning it does\textbf{ not} necessarily result in the maximum overall return.
+	
+	We considered actions as the value below the monopoly price that should be played, in order to attract more demand and consequently more reward in later stages. In our model the action-space is discrete. In each stage, action $ a \in \lbrace0, 1, ..., 19\rbrace $ with step$ =3 $ that means the price can be $ 0, 3, 6, ... ,$ or $57 $ units less than the stage's myopic price. 
+	
+	For example, for the low-cost player ( $ C=57 $), if $ D_i = 180 $ at the start of stage i and action $ a = 5 $:
+	\begin{equation*}
+		P^* = \frac{180 + 57}{2} = 118.5  \rightarrow P = P^*- ( a\times \text{step}) = 118.5 - 5\times 3 = 103.5 \\
+	\end{equation*}
+
+	The actions are determined by sampling from the probability distribution over the action space that is the output of neural network.
+	
+	\subsection{Structure of neural network}
 	
 	\section{Monte Carlo Policy Gradient}
 	
