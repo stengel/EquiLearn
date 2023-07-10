@@ -275,7 +275,11 @@ class bimatrix:
         tabl.runlemke(silent=True)
         return tuple(getequil(tabl))
 
-    def tracing(self, trace):
+    def tracing(self, trace,equi_num=1):
+        """
+        trace: number of iterations
+        equi_num: the number of most frequent equilibria
+        """
         if trace < 0:
             return
         m = self.A.numrows
@@ -303,14 +307,16 @@ class bimatrix:
 #                     print ("found eq", str_eq(eq,m,n), "index",
 #                         self.eqindex(eq,m,n))
                     trset[eq] = 1 
-        equilibrium = None
+        sorted_trset=sorted(trset.items(), key=lambda x: x[1], reverse=True)
+        equilibria = []
+        equilibria_num=min(equi_num,len(sorted_trset))
         times_found = 0
-        for eq in trset:
-            if trset[eq] > times_found:
-                equilibrium = eq
+        for i in range(equilibria_num):
+            if sorted_trset[i][1] > times_found:
+                equilibria.append(str_eq(sorted_trset[i][0], m,n))
 #             print (trset[eq],"times found ",str_eq(eq,m,n))
 #         print(trace,"total priors,",len(trset),"equilibria found")
-        return str_eq(equilibrium, m,n)
+        return equilibria
 
     def eqindex(self,eq,m,n):
         rowset,colset = supports(eq,m,n)

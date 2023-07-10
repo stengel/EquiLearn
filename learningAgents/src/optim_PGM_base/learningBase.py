@@ -29,7 +29,8 @@ class Solver():
 
     def write_to_excel(self, new_row):
         """
-        row includes:  # ep	adversary	return	advReturn loss	actor	critic	lr	gamma	hist	clc   actions probs  nn_name  total_stages	action_step num_actions return_against_adversaries
+        row includes:  # ep	adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	action_step  num_actions   agent's_prices
+        # adv's_prices  agent's_demands   adv's_demands   return_against_adversaries
         """
 
         path = 'results.xlsx'
@@ -114,7 +115,8 @@ class ReinforceAlgorithm(Solver):
         # plt.show()
 
     def compute_num_episodes(self, stage):
-        return int(self.numberEpisodes*((gl.total_stages-stage)))
+        return int(self.numberEpisodes*((gl.total_stages-stage)**1.2))
+        # return int(self.numberEpisodes*((gl.total_stages-stage)))
 
     def learn_stage_onwards(self, iter, stage, episodes, replay_buffer):
         """
@@ -225,9 +227,10 @@ class ReinforceAlgorithm(Solver):
                 break
 
         name = f"{int(time.time())}"
-        # ep	adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	action_step  num_actions   return_against_adversaries
-        self.dataRow = [len(self.returns[iter]), str(self.env.advMixedStrategy), returns, sum(self.env.profit[1]), loss.item(), self.neuralNetwork.lr, self.gamma, self.env.stateAdvHistory, str(
-            actions*gl.action_step), str((torch.exp(action_log_probs)).detach().numpy()), name, self.env.T, gl.action_step, self.neuralNetwork.num_actions]
+        # ep  costs adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	action_step  num_actions   agent's_prices
+        # adv's_prices  agent's_demands   adv's_demands   return_against_adversaries
+        self.dataRow = [len(self.returns[iter]), str(self.costs),str(self.env.advMixedStrategy), returns, sum(self.env.profit[1]), loss.item(), self.neuralNetwork.lr, self.gamma, self.env.stateAdvHistory, str(
+            actions*gl.action_step), str((torch.exp(action_log_probs)).detach().numpy()), name, self.env.T, gl.action_step, self.neuralNetwork.num_actions, str(self.env.prices[0]), str(self.env.prices[1]), str(self.env.demandPotential[0]), str(self.env.demandPotential[1])]
 
         self.neuralNetwork.name = name
         # for advmode in model.AdversaryModes:
@@ -238,19 +241,21 @@ class ReinforceAlgorithm(Solver):
         samples = replay_buffer.sample_game(episodes)
         # # field_names==["0 actions", "1 agent_demands", "2 agent_prices","3 adv_prices", "4 rewards"]
         for sample in samples:
-            action_log_probs_cut=[]
+            action_log_probs_cut = []
             for s in range(stage, gl.total_stages):
-                state =model.define_state(s, gl.total_demand, gl.total_stages,
-                                   self.costs[0], sample[2], sample[3], sample[1], gl.num_adv_history)
+                state = model.define_state(s, gl.total_demand, gl.total_stages,
+                                           self.costs[0], sample[2], sample[3], sample[1], gl.num_adv_history)
                 norm_state = normalize_state(state)
                 probs = self.policy(norm_state)
                 dist_action = Categorical(probs)
-                action_log_probs_cut.append(dist_action.log_prob((sample[0])[s]))
-            
+                action_log_probs_cut.append(
+                    dist_action.log_prob((sample[0])[s]))
+
             base_disc_returns = returns_computation(rewards=sample[4]) - (compute_base(agent_cost=self.costs[0],
                                                                                        stage_demand=(sample[1])[stage], adv_prices=sample[3], start_stage=stage)/gl.rewards_division_const)
-        
-            loss = loss_function(base_disc_returns[stage:], torch.stack(action_log_probs_cut))
+
+            loss = loss_function(
+                base_disc_returns[stage:], torch.stack(action_log_probs_cut))
             self.policy.zero_grad()
             loss.backward()
             self.optim.step()
@@ -259,12 +264,12 @@ class ReinforceAlgorithm(Solver):
         """
         writes the data in excel and saves nn
         """
-
+        self.neuralNetwork.name=f"{prefix}_{self.neuralNetwork.name}"
         # self.name = f"{[self.neuralNetwork.lr, self.gamma,clc]}-stage {stage}-{int(time.time())}"
-        self.neuralNetwork.save(f"{prefix}_{self.neuralNetwork.name}")
-        print(self.neuralNetwork.name, "saved")
-        # ep	adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	action_step  num_actions   return_against_adversaries
-
+        self.neuralNetwork.save()
+        # print(self.neuralNetwork.name, "saved")
+       # ep	 costs adversary	return  advReturn	loss  lr	gamma	hist  actions   probs  nn_name  total_stages	action_step  num_actions   agent's_prices
+        # adv's_prices  agent's_demands   adv's_demands   return_against_adversaries
         self.write_to_excel(self.dataRow)
 
     # def myopic_price(demand,cost):
@@ -398,7 +403,7 @@ class MixedStrategy():
         if len(self._strategies) > 0:
             # adversaryDist = Categorical(torch.tensor(self._strategyProbs))
             if not torch.is_tensor(self._strategyProbs):
-                self._strategyProbs=torch.tensor(self._strategyProbs)
+                self._strategyProbs = torch.tensor(self._strategyProbs)
             adversaryDist = Categorical(self._strategyProbs)
             strategyInd = (adversaryDist.sample()).item()
             return self._strategies[strategyInd]
@@ -431,7 +436,7 @@ class ReplayBuffer():
 
     def add_game(self, actions, agent_demands, agent_prices, adv_prices,  rewards):
         # self.entry = namedtuple("Entry", field_names=["0 actions", "1 agent_demands", "2 agent_prices","3 adv_prices", "4 rewards"])
-        entry = (actions,agent_demands, agent_prices, adv_prices, rewards)
+        entry = (actions, agent_demands, agent_prices, adv_prices, rewards)
         self.deque.append(entry)
 
     def sample_game(self, sample_size):
