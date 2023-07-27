@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
-from environmentModel import Model
+from Environment import Model
 import numpy as np # numerical python
 import pandas as pd
 # printoptions: output limited to 2 digits after decimal point

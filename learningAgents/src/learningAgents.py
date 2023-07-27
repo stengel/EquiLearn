@@ -56,8 +56,8 @@ class ReinforceAlgorithm(Solver):
         state, reward, done = self.env.reset()
                 
         normState = torch.tensor([  0.0000, 0.0000])
-        normState[0] = 2 * (state[0]/(self.env.T - 1)) - 1
-        normState[1] = 10 * (state[1]/(self.env.totalDemand)) - 5   
+        normState[0] = 2 * (state[0]/(self.env.total_stages - 1)) - 1
+        normState[1] = 10 * (state[1]/(self.env.total_demand)) - 5   
         period = 0
                 
         while not done:
@@ -73,11 +73,11 @@ class ReinforceAlgorithm(Solver):
             probMemory.append(probs[action])
             if probs[action] < 0.95:
                 earlyExit = False
-            state, reward, done = self.env.step(prevState, action.item())
+            state, reward, done = self.env.step(action.item())
             reward = reward * discount
             normState = torch.tensor([  0.0000, 0.0000])
-            normState[0] = 2 * (state[0]/(self.env.T - 1)) - 1
-            normState[1] = 10 * (state[1]/(self.env.totalDemand)) - 5
+            normState[0] = 2 * (state[0]/(self.env.total_stages - 1)) - 1
+            normState[1] = 10 * (state[1]/(self.env.total_demand)) - 5
             episodeMemory.append((normPrevState, action, reward))
             period += 1
                         
@@ -103,9 +103,9 @@ class ReinforceAlgorithm(Solver):
         """
             Method that performs Monte Carlo Policy Gradient algorithm. 
         """ 
-        bestActions = [0] * self.env.T
+        bestActions = [0] * self.env.total_stages
         bestPayoff = 0
-        finalActions = [0] * self.env.T
+        finalActions = [0] * self.env.total_stages
         finalPayoff = 0
         convergence = 1
         
