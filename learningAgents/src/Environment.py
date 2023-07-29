@@ -1,24 +1,21 @@
 # Francisco, Sahar, Edward
-# Contains Game Class and Model of the Game Class.
+# Contains environment class.
 
 from enum import Enum
-import torch
-import torch.nn as nn
-from torch.distributions import Categorical
 import numpy as np 
-from gym import Env
-from gym.spaces import Discrete, Box
+import gymnasium as gym
+from gymnasium import spaces
 
-class env(Env):
+class env(gym.Env):
 
 
     def __init__(self, total_demand, tuple_costs, total_stages, adversary_probabilities):
         
         # Actions that we can take: From 0 to 49 below the myopic price
-        self.action_space = Discrete(50)
+        self.action_space = spaces.Discrete(50)
         
         # State space
-        self.observation_space = Box(low = np.array([0, 0]), high = np.array([25, 400]))
+        self.observation_space = spaces.MultiDiscrete([total_stages, total_demand])
 
         self.total_demand = total_demand
         self.costs = tuple_costs
@@ -33,7 +30,7 @@ class env(Env):
         self.adversary_probabilities = adversary_probabilities
 
 
-    def reset(self):
+    def reset(self, seed = None, options = None):
 
         self.demand_potential = [[0]*(self.total_stages),[0]*(self.total_stages)] # two lists for the two players
         self.prices = [[0]*self.total_stages,[0]*self.total_stages]  # prices over rounds
@@ -44,14 +41,13 @@ class env(Env):
         self.done = False
         self.reset_adversary()
 
-        return torch.tensor(self.initial_state, dtype=torch.float32)
+        return np.array(self.initial_state).astype(np.int64), {}
     
 
     def reset_adversary(self):
 
-        adversary_distribution = Categorical(self.adversary_probabilities)
-        adversary = (adversary_distribution.sample()).item()
-        self.adversary_mode = AdversaryModes(adversary)
+        index = np.random.choice(len(self.adversary_probabilities), 1, p = self.adversary_probabilities)
+        self.adversary_mode = AdversaryModes(index)
         
         
     def step(self, action):
@@ -78,8 +74,8 @@ class env(Env):
         self.stage = self.stage + 1  
 
         info = {}
-        
-        return torch.tensor(new_state, dtype=torch.float32), reward, done, info
+
+        return (np.array(new_state).astype(np.int64), reward, done, False, info)
 
     def profits(self, player):
         """
@@ -239,6 +235,9 @@ class env(Env):
         return P    
     
     def render(self):
+        pass
+
+    def close(self):
         pass
 
 
