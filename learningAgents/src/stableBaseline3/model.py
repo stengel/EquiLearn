@@ -27,7 +27,7 @@ def train_agent(costs, adv_mixed_strategy, model, model_name, timesteps, num_tim
 
     lr_=(gl.LR if (lr is None) else lr)
 
-    model_ = model('MlpPolicy', env,learning_rate=lr_,verbose=1, tensorboard_log=log_dir)
+    model_ = model('MlpPolicy', env,learning_rate=lr_,verbose=0, tensorboard_log=log_dir, gamma=gl.GAMMA)
 
     for i in range(num_timesteps):
         model_.learn(total_timesteps=timesteps,
