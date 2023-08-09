@@ -5,7 +5,7 @@ import gym
 import numpy as np
 import os
 import time
-from openpyxl import load_workbook
+
 
 
 def train_agent(costs, adv_mixed_strategy, model, model_name, timesteps, num_timesteps, lr=None):
@@ -27,7 +27,7 @@ def train_agent(costs, adv_mixed_strategy, model, model_name, timesteps, num_tim
 
     lr_=(gl.LR if (lr is None) else lr)
 
-    model_ = model('MlpPolicy', env,learning_rate=lr_,verbose=0, tensorboard_log=log_dir, gamma=gl.GAMMA)
+    model_ = model('MlpPolicy', env,learning_rate=lr_,verbose=1, tensorboard_log=log_dir, gamma=gl.GAMMA)
 
     for i in range(num_timesteps):
         model_.learn(total_timesteps=timesteps,
@@ -45,23 +45,9 @@ def train_agent(costs, adv_mixed_strategy, model, model_name, timesteps, num_tim
             obs, reward, done, info = env.step(action)
 
             actions.append(int(action))
-        #   name	ep	costs	adversary	agent_return	adv_return	agent_rewards	actions	agent_prices	adv_prices	agent_demands	adv_demands	    lr	hist	 total_stages	action_step	num_actions  gamma"
-        data=[iter_name, timesteps*num_timesteps,("L" if (costs[0]<costs[1]) else "H"), env.adversary_strategy.name, sum(env.profit[0]), sum(env.profit[1]),            str(env.profit[0]), str(actions), str(env.prices[0]), str(env.prices[1]), str(env.demand_potential[0]),str(env.demand_potential[1]), lr_, gl.NUM_ADV_HISTORY, gl.TOTAL_STAGES, gl.ACTION_STEP, gl.NUM_ACTIONS, gl.GAMMA]
-        write_to_excel(data)
+        #   name	ep	costs	adversary	agent_return	adv_return	agent_rewards	actions	agent_prices	adv_prices	agent_demands	adv_demands	    lr	hist	 total_stages	action_step	num_actions  gamma  state_onehot"
+        data=[iter_name, timesteps*num_timesteps,("L" if (costs[0]<costs[1]) else "H"), env.adversary_strategy.name, sum(env.profit[0]), sum(env.profit[1]),            str(env.profit[0]), str(actions), str(env.prices[0]), str(env.prices[1]), str(env.demand_potential[0]),str(env.demand_potential[1]), lr_, gl.NUM_ADV_HISTORY, gl.TOTAL_STAGES, env.action_step, gl.NUM_ACTIONS, gl.GAMMA, env.state_onehot]
+        cl.write_to_excel(data)
         
 
-def write_to_excel(new_row):
-    """
-    row includes:  name	ep	costs	adversary	agent_return	adv_return	agent_rewards	actions	agent_prices	adv_prices	agent_demands	adv_demands	    lr	hist	total_stages	action_step	num_actions  gamma"
-    """
 
-    path = 'results.xlsx'
-    wb = load_workbook(path)
-    sheet = wb.active
-    row = 2
-    col = 1
-    sheet.insert_rows(idx=row)
-
-    for i in range(len(new_row)):
-        sheet.cell(row=row, column=col+i).value = new_row[i]
-    wb.save(path)

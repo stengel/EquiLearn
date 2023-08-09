@@ -1,5 +1,5 @@
 
-import torch
+# import torch
 import numpy as np  # numerical python
 import gym
 from gym import spaces
@@ -16,12 +16,15 @@ class PricingGame(gym.Env):
         Fully defines PricingGame. It contains game rules, memory and agents strategies.
     """
 
-    def __init__(self, tuple_costs, adversary_mixed_strategy):
+    def __init__(self, tuple_costs, adversary_mixed_strategy, state_onehot=False):
         super(PricingGame, self).__init__()
+
+        self.ONEHOT_LENGTH = 3
 
         # first index is always the agent
         self.costs = tuple_costs
         self.adversary_mixed_strategy = adversary_mixed_strategy
+        self.state_onehot = state_onehot
 
         self.total_demand = gl.TOTAL_DEMAND
         self.action_step = gl.ACTION_STEP
@@ -29,14 +32,18 @@ class PricingGame(gym.Env):
         self.T = gl.TOTAL_STAGES
         # number of previous adversary's prices we consider in the state
         self.state_adv_history = gl.NUM_ADV_HISTORY
-        self.reward_division= gl.REWARDS_DIVISION_CONST
+        self.reward_division = gl.REWARDS_DIVISION_CONST
 
         self.action_space = spaces.Discrete(gl.NUM_ACTIONS)
+
+        state_shape = (self.ONEHOT_LENGTH if self.state_onehot else 1) + \
+            2 + self.state_adv_history
         self.observation_space = spaces.Box(
-            low=0, high=self.total_demand, shape=(3+self.state_adv_history,))
+            low=0, high=self.total_demand, shape=(state_shape,))
 
     def step(self, action):
-        adversaryPrice = self.adversary_strategy.play(environment=self, player=1)
+        adversaryPrice = self.adversary_strategy.play(
+            environment=self, player=1)
 
         self.update_game_variables(
             [self.myopic()-(action * self.action_step), adversaryPrice])
@@ -48,10 +55,10 @@ class PricingGame(gym.Env):
 
         info = {}
 
-
         return self.get_state(stage=self.stage), reward, done, info
 
-    def reset(self):
+    def reset(self,seed=None):
+        
 
         self.resetGame()
         self.resetAdversary()
@@ -126,7 +133,7 @@ class PricingGame(gym.Env):
 
     # def step(self, price):
     #     """
-    #     Transition Function. 
+    #     Transition Function.
     #     Parameters:
     #     - action: Price
     #     - state: list in the latest stage (stage ,Demand Potential, Agent's Price, Adversary's price hisotry)
@@ -151,11 +158,21 @@ class PricingGame(gym.Env):
             adv_hist is not None) else self.state_adv_history
         adv_history = []
 
-        if stage == 0:
+        stage_part = [stage]
+        if self.state_onehot:
+            stage_part=[0]*3
+            if stage==0:
+                stage_part[0]=1
+            elif stage==self.T-1:
+                stage_part[2]=1
+            else:
+                stage_part[1]=1
 
+
+        if stage == 0:
             if (num_adv_hist > 0):
                 adv_history = [0]*num_adv_hist
-            observation = [self.stage, self.demand_potential[player]
+            observation = stage_part+[ self.demand_potential[player]
                            [self.stage], 0] + adv_history
         else:
             if (num_adv_hist > 0):
@@ -165,7 +182,7 @@ class PricingGame(gym.Env):
                     adv_history[j] = self.prices[1-player][i]
                     j -= 1
 
-            observation = [self.stage, self.demand_potential[player]
+            observation = stage_part+ [self.demand_potential[player]
                            [self.stage], self.prices[player][stage-1]] + adv_history
 
         return np.array(observation)
@@ -197,5 +214,3 @@ class PricingGame(gym.Env):
 #             state += adv_history
 
 #     return torch.tensor(state, dtype=torch.float32)
-
-
