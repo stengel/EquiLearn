@@ -1,5 +1,4 @@
 
-# import torch
 import numpy as np  # numerical python
 import gym
 from gym import spaces
@@ -11,13 +10,13 @@ from collections import deque
 np.set_printoptions(precision=2, suppress=False)
 
 
-class PricingGame(gym.Env):
+class ContinousPricingGame(gym.Env):
     """
         Fully defines PricingGame. It contains game rules, memory and agents strategies.
     """
 
     def __init__(self, tuple_costs, adversary_mixed_strategy, state_onehot=False):
-        super(PricingGame, self).__init__()
+        super().__init__()
 
         self.ONEHOT_LENGTH = 3
 
@@ -27,14 +26,14 @@ class PricingGame(gym.Env):
         self.state_onehot = state_onehot
 
         self.total_demand = gl.TOTAL_DEMAND
-        self.action_step = gl.ACTION_STEP
+        self.action_step = None
 
         self.T = gl.TOTAL_STAGES
         # number of previous adversary's prices we consider in the state
         self.state_adv_history = gl.NUM_ADV_HISTORY
         self.reward_division = gl.REWARDS_DIVISION_CONST
 
-        self.action_space = spaces.Discrete(gl.NUM_ACTIONS)
+        self.action_space = spaces.Box(low=0, high=gl.CON_ACTIONS_RANGE, shape=(1,))
 
         state_shape = (self.ONEHOT_LENGTH if self.state_onehot else 1) + \
             2 + self.state_adv_history
@@ -46,7 +45,7 @@ class PricingGame(gym.Env):
             environment=self, player=1)
 
         self.update_game_variables(
-            [self.myopic()-(action * self.action_step), adversaryPrice])
+            [self.myopic()-action[0], adversaryPrice])
 
         done = (self.stage == self.T-1)
 
@@ -58,7 +57,7 @@ class PricingGame(gym.Env):
         return self.get_state(stage=self.stage), reward, done, info
 
     def reset(self):
-        
+        # super().reset(seed=seed)
 
         self.resetGame()
         self.resetAdversary()
