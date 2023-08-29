@@ -1,8 +1,9 @@
 from enum import Enum
 import numpy as np
 import globals as gl
-import torch
-from torch.distributions import Categorical
+# import torch
+# from torch.distributions import Categorical
+from openpyxl import load_workbook
 
 
 class Strategy():
@@ -41,14 +42,14 @@ class Strategy():
         """
         self.env = environment
         if self.type == StrategyType.neural_net:
-            state = self.env.get_state(
-                self.env.stage, player, adv_hist=gl.num_adv_history)
-            normState = normalize_state(state=state)
-            probs = self.policy(normState)
-            distAction = Categorical(probs)
-            action = distAction.sample()
-            return compute_price(action=action.item(), action_step=gl.ACTION_STEP, demand=self.env.demandPotential[player][self.env.stage], cost=self.env.costs[player])
-
+            # state = self.env.get_state(
+            #     self.env.stage, player, adv_hist=gl.num_adv_history)
+            # normState = normalize_state(state=state)
+            # probs = self.policy(normState)
+            # distAction = Categorical(probs)
+            # action = distAction.sample()
+            # return compute_price(action=action.item(), action_step=gl.ACTION_STEP, demand=self.env.demandPotential[player][self.env.stage], cost=self.env.costs[player])
+            pass
         else:
             return self.policy(self.env, player, self.firstPrice)
 
@@ -72,7 +73,7 @@ class Strategy():
         """
         Returns a MixedStrategy, Pr(self)=1
         """
-        mix = MixedStrategy(probablitiesArray=torch.ones(1),
+        mix = MixedStrategy(probablitiesArray=np.ones(1),
                             strategiesList=[self])
 
         return mix
@@ -89,11 +90,12 @@ class MixedStrategy():
     def set_adversary_strategy(self):
         if len(self._strategies) > 0:
             # adversaryDist = Categorical(torch.tensor(self._strategyProbs))
-            if not torch.is_tensor(self._strategyProbs):
-                self._strategyProbs = torch.tensor(self._strategyProbs)
-            adversaryDist = Categorical(self._strategyProbs)
-            strategyInd = (adversaryDist.sample()).item()
-            return self._strategies[strategyInd]
+            # if not torch.is_tensor(self._strategyProbs):
+            #     self._strategyProbs = torch.tensor(self._strategyProbs)
+            # adversaryDist = Categorical(self._strategyProbs)
+            # strategyInd = (adversaryDist.sample()).item()
+            strategyInd= np.random.choice(len(self._strategies), size=1, p= self._strategyProbs)
+            return self._strategies[strategyInd[0]]
         else:
             print("adversary's strategy can not be set!")
             return None
@@ -223,3 +225,20 @@ def monopolyPrice(demand, cost):  # myopic monopoly price
     """
     return (demand + cost) / 2
     # return (self.demandPotential[player][self.stage] + self.costs[player])/2
+
+
+def write_to_excel(new_row):
+    """
+    row includes:  name	ep	costs	adversary	agent_return	adv_return	agent_rewards	actions	agent_prices	adv_prices	agent_demands	adv_demands	lr	hist	total_stages	action_step	num_actions	gamma	stae_onehot	seed	num_procs	running_time
+    """
+
+    path = 'results.xlsx'
+    wb = load_workbook(path)
+    sheet = wb.active
+    row = 2
+    col = 1
+    sheet.insert_rows(idx=row)
+
+    for i in range(len(new_row)):
+        sheet.cell(row=row, column=col+i).value = new_row[i]
+    wb.save(path)
