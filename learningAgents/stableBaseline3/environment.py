@@ -1,5 +1,3 @@
-# Francisco, Sahar, Edward
-# Contains environment class.
 
 from enum import Enum
 import numpy as np 
@@ -16,7 +14,7 @@ class ConPricingGame(gym.Env):
         
         # Actions that we can take: From 0 to 49 below the myopic price
         # self.action_space = spaces.Discrete(50)
-        
+        self.action_step=None
 
         self.total_demand = gl.TOTAL_DEMAND
         self.costs = tuple_costs
@@ -44,7 +42,7 @@ class ConPricingGame(gym.Env):
         super().reset(seed=seed)
 
         self.resetGame()
-        self.adversary_strategy = self.adversary_mixed_strategy.set_adversary_strategy()
+        self.adversary_strategy = self.adversary_mixed_strategy.choose_strategy()
         # [stage, agent_ demand, agent_last_price, adversary_price_history]
         observation = self.get_state(stage=0)
         return observation, {}# reward, done, info can't be included
@@ -65,6 +63,7 @@ class ConPricingGame(gym.Env):
         self.profit = [[0]*self.T, [0]*self.T]  # profit in each of T rounds
         # initialize first round 0
         self.demand_potential[0][0] = self.demand_potential[1][0] = self.total_demand / 2
+        self.actions=[0]*self.T
     
     def get_state(self, stage, player=0, adv_hist=None):
 
@@ -105,8 +104,9 @@ class ConPricingGame(gym.Env):
     
 
     def step(self,action):
+        self.actions[self.stage]=action[0]
         adversary_action  = self.adversary_strategy.play(
-            environment=self, player=1)
+            env=self, player=1)
         self.update_game_variables( [self.myopic() - action[0], adversary_action] ) 
 
         done = (self.stage == self.T-1)
@@ -163,9 +163,9 @@ class DisPricingGame(ConPricingGame):
         self.action_space = spaces.Discrete(gl.NUM_ACTIONS)
     
     def step(self, action):
-
+        self.actions[self.stage]=action
         adversary_action  = self.adversary_strategy.play(
-            environment=self, player=1)
+            env=self, player=1)
         self.update_game_variables( [self.myopic() - (action*self.action_step), adversary_action] ) 
 
         done = (self.stage == self.T-1)
