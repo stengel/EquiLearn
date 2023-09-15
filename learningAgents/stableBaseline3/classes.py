@@ -77,7 +77,7 @@ class BimatrixGame():
         for strt in self.high_strategies:
             output+=f" {strt.name} "
 
-        with open(f".\games\game{int(time.time())}.txt", "w") as out:
+        with open(f"games/game{int(time.time())}.txt", "w") as out:
             out.write(output)
         
 
@@ -180,6 +180,10 @@ class Strategy():
             action, _ = self.policy(state)
             #compute price for co model and disc model
             price= (env.myopic(player)-action[0]) if (self.action_step is None) else (env.myopic(player)-(self.action_step*action))
+
+            if player==0:
+                env.actions[env.stage]= (action[0] if(self.action_step is None) else (self.action_step*action))
+
             return price
         else:
             return self.policy(env, player, self.first_price)
