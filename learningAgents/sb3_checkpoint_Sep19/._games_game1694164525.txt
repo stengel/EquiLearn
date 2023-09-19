@@ -1,0 +1,15 @@
+3 3
+
+    140     139     139 
+    139     128     128 
+    155     169     142 
+
+     94      95      95 
+     95     104     104 
+     80      69      79 
+
+
+low-cost strategies: 
+ myopic  const  guess 
+high-cost strategies: 
+ myopic  const  guess 

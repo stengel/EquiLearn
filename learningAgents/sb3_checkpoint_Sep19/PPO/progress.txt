@@ -1,0 +1,31 @@
+
+
+Sat Sep  9 07:39:21 2023
+--------------------------------------------------
+
+Round 0 of 10
+equi: [0.00, 0.00, 1.00], [1.00, 0.00, 0.00], 155.00, 79.67
+high-cost player CoPPO-1694305175 , payoff= 82.74 added, trained against [0, 0, 1.0], payoff=79.67
+Round 1 of 10
+equi: [0.00, 0.00, 1.00], [0.00, 0.00, 0.00, 1.00], 147.41, 82.74
+high-cost player CoPPO-1694433350 , payoff= 82.91 added, trained against [0, 0, 1.0], payoff=82.74
+Round 2 of 10
+equi: [0.00, 0.00, 1.00], [0.00, 0.00, 0.00, 1.00, 0.00], 147.41, 82.74
+
+Fri Sep 15 14:29:05 2023
+--------------------------------------------------
+
+Round 0 of 10
+equi: [0.00, 0.00, 1.00], [0.00, 0.00, 0.00, 1.00, 0.00], 147.45, 82.80
+high-cost player CoPPO-1694840414 , payoff= 83.19 added, trained against [0, 0, 1.0], payoff=82.80
+Round 1 of 10
+equi: [0.00, 0.00, 1.00], [0.00, 0.00, 0.00, 1.00, 0.00, 0.00], 147.45, 82.80
+Round 2 of 10
+equi: [0.00, 0.00, 1.00], [0.00, 0.00, 0.00, 1.00, 0.00, 0.00], 147.45, 82.80
+low-cost player CoPPO-1694948003 , payoff= 147.83 added, trained against [0, 0, 0, 1.0, 0, 0], payoff=147.45
+Round 3 of 10
+equi: [0.00, 0.00, 0.00, 1.00], [0.00, 0.00, 1.00, 0.00, 0.00, 0.00], 146.32, 83.74
+low-cost player CoPPO-1695021123 , payoff= 151.26 added, trained against [0, 0, 1.0, 0, 0, 0], payoff=146.32
+high-cost player CoPPO-1695061323 , payoff= 89.19 added, trained against [0, 0, 0, 1.0], payoff=83.74
+Round 4 of 10
+equi: [0.00, 0.00, 0.75, 0.25, 0.00], [0.00, 0.00, 0.00, 0.83, 0.00, 0.00, 0.17], 146.28, 82.83

@@ -1,0 +1,19 @@
+5 4
+
+    140     139     139     134 
+    139     128     128     128 
+    155     169     142     150 
+    167     224     113     140 
+    175     297      88     159 
+
+     94      95      95      98 
+     95     104     104     103 
+     80      69      79      82 
+     56      16      67      59 
+     33     -47      31      36 
+
+
+low-cost strategies: 
+ myopic  const  guess  CoSAC-1694164525  CoSAC-1694655185 
+high-cost strategies: 
+ myopic  const  guess  CoSAC-1694461629 
