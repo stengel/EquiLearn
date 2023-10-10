@@ -1,0 +1,24 @@
+
+
+Fri Sep  8 10:15:25 2023
+--------------------------------------------------
+
+Round 0 of 10
+equi: [0.00, 0.00, 1.00], [1.00, 0.00, 0.00], 155.00, 79.67
+low-cost player CoSAC-1694164525 , payoff= 167.25 added, trained against [1.0, 0, 0], payoff=155.00
+high-cost player CoSAC-1694461629 , payoff= 81.91 added, trained against [0, 0, 1.0], payoff=79.67
+Round 1 of 10
+equi: [0.00, 0.00, 1.00, 0.00], [0.00, 0.00, 0.00, 1.00], 149.58, 81.91
+
+Fri Sep 15 14:38:50 2023
+--------------------------------------------------
+
+Round 0 of 10
+equi: [0.00, 0.00, 1.00, 0.00], [0.00, 0.00, 0.00, 1.00], 149.51, 81.66
+low-cost player CoSAC-1694655185 , payoff= 158.76 added, trained against [0, 0, 0, 1.0], payoff=149.58
+Round 2 of 10
+equi: [0.00, 0.00, 0.00, 0.00, 1.00], [0.00, 0.00, 0.00, 1.00], 158.76, 35.74
+low-cost player CoSAC-1694966441 , payoff= 161.55 added, trained against [0, 0, 0, 1.0], payoff=158.76
+high-cost player CoSAC-1695131273 , payoff= 39.10 added, trained against [0, 0, 0, 0, 1.0], payoff=35.74
+Round 3 of 10
+equi: [0.00, 0.00, 0.50, 0.00, 0.00, 0.50], [0.00, 0.00, 0.21, 0.79, 0.00], 147.94, 59.37

@@ -1,0 +1,15 @@
+3 4
+
+    140     139     139     129 
+    139     128     128     119 
+    155     169     142     147 
+
+     94      95      95     102 
+     95     104     104     110 
+     80      69      79      83 
+
+
+low-cost strategies: 
+ myopic  const  guess 
+high-cost strategies: 
+ myopic  const  guess  CoPPO-1694305175 
