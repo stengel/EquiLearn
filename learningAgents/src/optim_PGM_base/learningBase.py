@@ -343,7 +343,7 @@ class Strategy():
             self.nn_hist = gl.num_adv_history
         else:
             self.policy = NNorFunc
-            self._firstPrice = firstPrice
+            self.firstPrice = firstPrice
 
     def reset(self):
         pass

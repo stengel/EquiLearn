@@ -1,48 +1,49 @@
-import BimatrixGame as BG
-import globals as gl
-import torch
-import numpy as np
-from environmentModelBase import Model, MixedStrategy, Strategy, StrategyType
-import environmentModelBase as em
-from learningBase import ReinforceAlgorithm
-from neuralNetworkSimple import NNBase
+# import BimatrixGame as BG
+# import globals as gl
+# import torch
+# import numpy as np
+# from environmentModelBase import Model, MixedStrategy, Strategy, StrategyType
+# import environmentModelBase as em
+# from learningBase import ReinforceAlgorithm
+# from neuralNetworkSimple import NNBase
+import bimatrix
 
-# def myopic19(env, player, firstprice=0):
-#     """
-#         Adversary follows Myopic strategy
-#     """
-#     return env.monopolyPrice(player)-19
+# # def myopic19(env, player, firstprice=0):
+# #     """
+# #         Adversary follows Myopic strategy
+# #     """
+# #     return env.monopolyPrice(player)-19
 
-np.random.seed(0)
-gl.initialize()
+# np.random.seed(0)
+# gl.initialize()
 
-number_rounds=50
+# number_rounds=50
 
-l1=NNBase(lr=gl.lr, num_input=gl.totalStages+2+gl.adversaryHistroy,num_actions=gl.numActions,adv_hist=gl.adversaryHistroy,action_step=gl.action_step)
-l1.load("low,1684386202")
-# l2=NNBase(lr=gl.lr, num_input=gl.totalStages+2+gl.adversaryHistroy,num_actions=gl.numActions,adv_hist=gl.adversaryHistroy,action_step=gl.actionStep)
-# l2.load("low,1684332617")
-# h1=NNBase(lr=gl.lr, num_input=gl.totalStages+2+gl.adversaryHistroy,num_actions=gl.numActions,adv_hist=gl.adversaryHistroy,action_step=gl.actionStep)
-# h1.load("high,1684261807")
-equilibria = []
-bimatrix_game.low_strategies = [
-                    # Strategy(StrategyType.static, NNorFunc=myopic19, name="myopic19")
-                    # Strategy(StrategyType.static, NNorFunc=em.const, name="const", firstPrice=132), 
-                    # Strategy(StrategyType.static, NNorFunc=em.guess, name="guess", firstPrice=132),
-                    Strategy(StrategyType.neural_net, NNorFunc=l1, name=l1.name)
-                    # Strategy(StrategyType.neural_net, NNorFunc=l2, name=l2.nn_name)
-                   ]
-bimatrix_game.high_strategies = [
-                    Strategy(StrategyType.static, NNorFunc=em.myopic, name="myopic") ,
-                    Strategy(StrategyType.static, NNorFunc=em.const, name="const", firstPrice=132), 
-                    Strategy(StrategyType.static, NNorFunc=em.guess, name="guess", firstPrice=132),
-                    # Strategy(StrategyType.neural_net, NNorFunc=h1, name=h1.nn_name),
-                   ]
-bimatrix_game = BG.BimatrixGame(bimatrix_game.low_strategies, bimatrix_game.high_strategies)
-    # bimatrixGame.reset_matrix()
-bimatrix_game.fill_matrix()
-print(bimatrix_game.matrix_A)
-print(bimatrix_game.matrix_B)
+# l1=NNBase(lr=gl.lr, num_input=gl.totalStages+2+gl.adversaryHistroy,num_actions=gl.numActions,adv_hist=gl.adversaryHistroy,action_step=gl.action_step)
+# l1.load("low,1684386202")
+# # l2=NNBase(lr=gl.lr, num_input=gl.totalStages+2+gl.adversaryHistroy,num_actions=gl.numActions,adv_hist=gl.adversaryHistroy,action_step=gl.actionStep)
+# # l2.load("low,1684332617")
+# # h1=NNBase(lr=gl.lr, num_input=gl.totalStages+2+gl.adversaryHistroy,num_actions=gl.numActions,adv_hist=gl.adversaryHistroy,action_step=gl.actionStep)
+# # h1.load("high,1684261807")
+# equilibria = []
+# bimatrix_game.low_strategies = [
+#                     # Strategy(StrategyType.static, NNorFunc=myopic19, name="myopic19")
+#                     # Strategy(StrategyType.static, NNorFunc=em.const, name="const", firstPrice=132), 
+#                     # Strategy(StrategyType.static, NNorFunc=em.guess, name="guess", firstPrice=132),
+#                     Strategy(StrategyType.neural_net, NNorFunc=l1, name=l1.name)
+#                     # Strategy(StrategyType.neural_net, NNorFunc=l2, name=l2.nn_name)
+#                    ]
+# bimatrix_game.high_strategies = [
+#                     Strategy(StrategyType.static, NNorFunc=em.myopic, name="myopic") ,
+#                     Strategy(StrategyType.static, NNorFunc=em.const, name="const", firstPrice=132), 
+#                     Strategy(StrategyType.static, NNorFunc=em.guess, name="guess", firstPrice=132),
+#                     # Strategy(StrategyType.neural_net, NNorFunc=h1, name=h1.nn_name),
+#                    ]
+# bimatrix_game = BG.BimatrixGame(bimatrix_game.low_strategies, bimatrix_game.high_strategies)
+#     # bimatrixGame.reset_matrix()
+# bimatrix_game.fill_matrix()
+# print(bimatrix_game.matrix_A)
+# print(bimatrix_game.matrix_B)
 # low_cost_probabilities, high_cost_probabilities, low_cost_payoff, high_cost_payoff = bimatrixGame.compute_equilibria()
 # for round in range(number_rounds):
 #     print("Round", round, " of ", number_rounds)
@@ -80,3 +81,7 @@ print(bimatrix_game.matrix_B)
     #     gl.numEpisodes = gl.numEpisodesReset
     # else:
     #     gl.numEpisodes += 1000
+
+game=bimatrix.bimatrix("game8x5.txt")
+equi=game.tracing(100,3)
+print(equi)

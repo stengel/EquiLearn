@@ -5,7 +5,7 @@ def initialize():
     highCost = 71
     totalStages = 25
     adversaryHistroy = 3
-    lr = 0.00001
+    lr = 0.000005
     gamma = 1
     numActions = 20
     actionStep = 3
