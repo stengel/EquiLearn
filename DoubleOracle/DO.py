@@ -49,9 +49,9 @@ if __name__ == "__main__":
     env_class = ConPricingGame
 
     num_rounds = 3
-    num_procs = 3
+    num_procs = 1
     start_random = True
-    job_name = "Mar21"
+    job_name = "test"
 
     db_name = job_name+".db"
     db = cl.DataBase(db_name)
@@ -70,7 +70,8 @@ if __name__ == "__main__":
 
     cl.prt("\n" + time.ctime(time.time())+"\n"+("-"*50)+"\n")
 
-    dictionaries = bimatrix_game.compute_equilibria()
+    all_equilibria = bimatrix_game.compute_equilibria()
+    equilibria = all_equilibria[:min(len(all_equilibria), gl.NUM_TRACE_EQUILIBRIA)]
     game_size = bimatrix_game.size()
 
     # low_cost_probabilities, high_cost_probabilities, low_cost_payoff, high_cost_payoff = bimatrix_game.compute_equilibria()
@@ -80,21 +81,21 @@ if __name__ == "__main__":
         added_low = 0
         added_high = 0
         # for equilibrium in dictionaries:
-        for equi_i in range(len(dictionaries)):
+        for equi in equilibria:
             new_equi_low = 0
             new_equi_high = 0
-            equi = dictionaries[equi_i]
+
             # low_prob_str = ", ".join(
             #     map("{0:.2f}".format, equi["low_cost_probs"]))
             # high_prob_str = ", ".join(
             #     map("{0:.2f}".format, equi["high_cost_probs"]))
             cl.prt(
-                f'equi: {str(equi["low_cost_support"])}, {str(equi["high_cost_support"])}\n payoffs= {equi["low_cost_payoff"]:.2f}, {equi["high_cost_payoff"]:.2f}')
+                f'equi: {str(equi.row_support)}, {str(equi.col_support)}\n payoffs= {equi.row_payoff:.2f}, {equi.col_payoff:.2f}')
 
             # train a low-cost agent
             high_mixed_strat = cl.MixedStrategy(
-                strategies_lst=bimatrix_game.high_strategies, probablities_lst=((equi["high_cost_probs"]+([0]*added_high)) if
-                                                                                added_high > 0 else equi["high_cost_probs"]))
+                strategies_lst=bimatrix_game.high_strategies, probablities_lst=((equi.col_probs+([0]*added_high)) if
+                                                                                added_high > 0 else equi.col_probs))
 
             for alg in algs:
                 for lr in lrs:
@@ -103,7 +104,7 @@ if __name__ == "__main__":
                         print(f'training low-cost agents with alg={str(alg)}, lr={lr:.4f}, memory={memory}')
 
                         results = cl.train_processes(db=db, env_class=env_class, costs=[gl.LOW_COST, gl.HIGH_COST],
-                                                     adv_mixed_strategy=high_mixed_strat, target_payoff=equi["low_cost_payoff"],
+                                                     adv_mixed_strategy=high_mixed_strat, target_payoff=equi.row_payoff,
                                                      num_procs=num_procs, alg=alg, lr=lr, memory=memory)
                         for result in results:
                             acceptable, agent_payoffs, adv_payoffs, agent_strategy, expected_payoff, base_agent_name = result
@@ -117,14 +118,15 @@ if __name__ == "__main__":
 
             # train a high-cost agent
             low_mixed_strat = cl.MixedStrategy(
-                strategies_lst=bimatrix_game.low_strategies, probablities_lst=((equi["low_cost_probs"]+([0]*added_low)) if added_low > 0 else equi["low_cost_probs"]))
+                strategies_lst=bimatrix_game.low_strategies, probablities_lst=((equi.row_probs+([0]*added_low)) if added_low > 0 else equi.row_probs))
 
             for alg in algs:
                 for lr in lrs:
                     for memory in memories:
                         print(f'training high-cost player with alg={str(alg)}, lr={lr:.4f}, memory={memory}')
+
                         results = cl.train_processes(db=db, env_class=env_class, costs=[gl.HIGH_COST, gl.LOW_COST],
-                                                     adv_mixed_strategy=low_mixed_strat, target_payoff=equi["high_cost_payoff"],
+                                                     adv_mixed_strategy=low_mixed_strat, target_payoff=equi.col_payoff,
                                                      num_procs=num_procs, alg=alg, lr=lr, memory=memory)
                         for result in results:
                             acceptable, agent_payoffs, adv_payoffs, agent_strategy, expected_payoff, base_agent_name = result
@@ -136,6 +138,8 @@ if __name__ == "__main__":
 
                                 cl.prt(
                                     f'high-cost player {agent_strategy.name} , payoff= {expected_payoff:.2f} added, base={base_agent_name}, alg={str(alg)}, lr={lr:.4f}, memory={memory}')
+
+            # because high_mixed_strt is defined before the changes to bimatrix.high_strategies. (error in str(high_mixed))
             if new_equi_high > 0:
                 high_mixed_strat.strategy_probs += [0]*new_equi_high
 
@@ -144,12 +148,15 @@ if __name__ == "__main__":
                 #     [equi["low_cost_probs"], equi["high_cost_probs"], equi["low_cost_payoff"], equi["high_cost_payoff"]])
                 # to do: add the equilibria to the db
             db.insert_new_equi(game_size=game_size, low_strategy_txt=str(low_mixed_strat), high_strategy_txt=str(
-                high_mixed_strat), low_payoff=equi["low_cost_payoff"], high_payoff=equi["high_cost_payoff"], low_new_num=new_equi_low, high_new_num=new_equi_high)
+                high_mixed_strat), low_payoff=equi.row_payoff, high_payoff=equi.col_payoff, low_new_num=new_equi_low, high_new_num=new_equi_high)
 
         if added_low == 0 and added_high == 0:
             gl.N_EPISODES_BASE *= 1.1
             gl.N_EPISODES_LOAD *= 1.1
         else:
-            dictionaries = bimatrix_game.compute_equilibria()
+            all_equilibria = bimatrix_game.compute_equilibria()
+            equilibria = all_equilibria[:min(len(all_equilibria), gl.NUM_TRACE_EQUILIBRIA)]
             game_size = bimatrix_game.size()
-    dictionaries = bimatrix_game.compute_equilibria()
+
+    all_equilibria = bimatrix_game.compute_equilibria()
+    equilibria = all_equilibria[:min(len(all_equilibria), gl.NUM_TRACE_EQUILIBRIA)]
