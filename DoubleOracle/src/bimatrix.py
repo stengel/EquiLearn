@@ -9,7 +9,21 @@ import src.columnprint as columnprint
 import src.lemke as lemke
 import src.randomstart as randomstart
 import random # random.seed
-import src.classes as cl
+# import src.classes as cl
+
+class Equi():
+    def __init__(self,row_probs,col_probs,row_payoff,col_payoff,row_support,col_support, found=1):
+        self.row_probs=row_probs
+        self.col_probs=col_probs
+        self.row_payoff=row_payoff
+        self.col_payoff=col_payoff
+        self.row_support=row_support
+        self.col_support=col_support
+        self.found=found
+    def __str__(self) -> str:
+        row_sup= [f"{i}: {self.row_probs[i]:.3f}" for i in self.row_support]
+        col_sup= [f"{i}: {self.col_probs[i]:.3f}" for i in self.col_support]
+        return f"[{', '.join(row_sup)}]x[{', '.join(col_sup)}]\nfound: {self.found}, payoff=({self.row_payoff:.2f},{self.col_payoff:.2f})"
 
 # for debugging
 def printglobals(): 
@@ -276,7 +290,7 @@ class bimatrix:
         tabl.runlemke(silent=True)
         return tuple(getequil(tabl))
 
-    def tracing(self, trace,equi_num=1):
+    def tracing(self, trace):
         """
         trace: number of iterations
         equi_num: the number of most frequent equilibria
@@ -310,20 +324,30 @@ class bimatrix:
                     trset[eq] = 1 
         sorted_trset=sorted(trset.items(), key=lambda x: x[1], reverse=True)
 
-        cl.prt("\n all equilibria: \n")
-        for eq in sorted_trset:
-            cl.prt(str_eq(eq[0], m,n)+ ", found: "+ str(eq[1])+"\n")
+        
 
         equilibria = []
-        equilibria_num=min(equi_num,len(sorted_trset))
-        times_found = 0
-        for i in range(equilibria_num):
-            if sorted_trset[i][1] > times_found:
-                equilibria.append(str_eq(sorted_trset[i][0], m,n))
+
+        for i in range(len(sorted_trset)):
+            if sorted_trset[i][1] > 0:
+                equilibria.append(self.set_equi(sorted_trset[i]))
 #             print (trset[eq],"times found ",str_eq(eq,m,n))
 #         print(trace,"total priors,",len(trset),"equilibria found")
         return equilibria
-
+    def set_equi(self,dict_item)-> Equi:
+        found=dict_item[1]
+        eq=dict_item[0]
+        m = self.A.numrows
+        n = self.A.numcolumns
+        row_probs=[float(i) for i in eq[0:m]]
+        col_probs=[float(i) for i in eq[m:m+n]]
+        row_support,col_support = supports(eq,m,n)
+        row_payoff = np.matmul(row_probs, np.matmul(
+            self.A.matrix, np.transpose(col_probs)))
+        col_payoff = np.matmul(row_probs, np.matmul(
+            self.B.matrix, np.transpose(col_probs)))
+        return Equi(row_probs,col_probs,row_payoff,col_payoff,row_support,col_support,found)
+        
     def eqindex(self,eq,m,n):
         rowset,colset = supports(eq,m,n)
         k,l = len(rowset),len(colset)

@@ -285,42 +285,43 @@ class BimatrixGame():
         #     self._matrix_A[j].append(colA[j])
         #     self._matrix_B[j].append(colB[j])
 
-    def compute_equilibria(self):
-        self.write_all_matrix()
+    def compute_equilibria(self,num_trace=100,write_matrix=True, prt_progress=True):
+        """ returns a list of Equi, all the equilibria found for the bimatrix game"""
+        if write_matrix:
+            self.write_all_matrix()
         game = bimatrix.bimatrix(f"game_{job_name}.txt")
-        equilibria_traces = game.tracing(100, gl.NUM_TRACE_EQUILIBRIA)
-        equilibria = []
-        for equilibrium in equilibria_traces:
-            low_cost_probs, high_cost_probs, low_cost_support, high_cost_support = recover_probs(
-                equilibrium)
-            low_cost_probabilities = return_distribution(
-                len(self.low_strategies), low_cost_probs, low_cost_support)
-            high_cost_probabilities = return_distribution(
-                len(self.high_strategies), high_cost_probs, high_cost_support)
-            low_cost_payoff = np.matmul(low_cost_probabilities, np.matmul(
-                self.matrix_A, np.transpose(high_cost_probabilities)))
-            high_cost_payoff = np.matmul(low_cost_probabilities, np.matmul(
-                self.matrix_B, np.transpose(high_cost_probabilities)))
+        equilibria_all = game.tracing(num_trace)
+        if prt_progress:
+            prt(f"\n all equilibria: {len(equilibria_all)} \n")
+            for i in range(len(equilibria_all)):
+                prt(f"{i} - {equilibria_all[i]}")
+        
+        return equilibria_all
+        
+        # return equilibria_all[0:(min(gl.NUM_TRACE_EQUILIBRIA, len(equilibria_all)))]
+        # for equilibrium in equilibria_traces:
+        #     low_cost_probs, high_cost_probs, low_cost_support, high_cost_support = recover_probs(
+        #         equilibrium)
+        #     low_cost_probabilities = return_distribution(
+        #         len(self.low_strategies), low_cost_probs, low_cost_support)
+        #     high_cost_probabilities = return_distribution(
+        #         len(self.high_strategies), high_cost_probs, high_cost_support)
+        #     low_cost_payoff = np.matmul(low_cost_probabilities, np.matmul(
+        #         self.matrix_A, np.transpose(high_cost_probabilities)))
+        #     high_cost_payoff = np.matmul(low_cost_probabilities, np.matmul(
+        #         self.matrix_B, np.transpose(high_cost_probabilities)))
 
-            result = {"low_cost_probs": low_cost_probabilities,
-                      "high_cost_probs": high_cost_probabilities,
-                      "low_cost_payoff": low_cost_payoff,
-                      "high_cost_payoff": high_cost_payoff,
-                      "low_cost_support": low_cost_support,
-                      "high_cost_support": high_cost_support
-                      }
-            equilibria.append(result)
+        #     result = {"low_cost_probs": low_cost_probabilities,
+        #               "high_cost_probs": high_cost_probabilities,
+        #               "low_cost_payoff": low_cost_payoff,
+        #               "high_cost_payoff": high_cost_payoff,
+        #               "low_cost_support": low_cost_support,
+        #               "high_cost_support": high_cost_support
+        #               }
+        #     equilibria.append(result)
         return equilibria
 
-class Equi():
-    def __init__(self,low_cost_probs,high_cost_probs,low_cost_payoff,high_cost_payoff,low_cost_support,high_cost_support):
-        self.low_cost_probs=low_cost_probs
-        self.high_cost_probs=high_cost_probs
-        self.low_cost_payoff=low_cost_payoff
-        self.high_cost_payoff=high_cost_payoff
-        self.low_cost_support=low_cost_support
-        self.high_cost_support=high_cost_support
-        
+
 
 class Strategy():
     """
@@ -668,25 +669,25 @@ def support_count(list):
     return counter
 
 
-def recover_probs(test):
-    low_cost_probs, high_cost_probs, rest = test.split(")")
-    low_cost_probs = low_cost_probs.split("(")[1]
-    _, high_cost_probs = high_cost_probs.split("(")
-    high_cost_probs = [float(Fraction(s)) for s in high_cost_probs.split(',')]
-    low_cost_probs = [float(Fraction(s)) for s in low_cost_probs.split(',')]
-    _, low_cost_support, high_cost_support = rest.split('[')
-    high_cost_support, _ = high_cost_support.split(']')
-    high_cost_support = [int(s) for s in high_cost_support.split(',')]
-    low_cost_support, _ = low_cost_support.split(']')
-    low_cost_support = [int(s) for s in low_cost_support.split(',')]
-    return low_cost_probs, high_cost_probs, low_cost_support, high_cost_support
+# def recover_probs(test):
+#     low_cost_probs, high_cost_probs, rest = test.split(")")
+#     low_cost_probs = low_cost_probs.split("(")[1]
+#     _, high_cost_probs = high_cost_probs.split("(")
+#     high_cost_probs = [float(Fraction(s)) for s in high_cost_probs.split(',')]
+#     low_cost_probs = [float(Fraction(s)) for s in low_cost_probs.split(',')]
+#     _, low_cost_support, high_cost_support = rest.split('[')
+#     high_cost_support, _ = high_cost_support.split(']')
+#     high_cost_support = [int(s) for s in high_cost_support.split(',')]
+#     low_cost_support, _ = low_cost_support.split(']')
+#     low_cost_support = [int(s) for s in low_cost_support.split(',')]
+#     return low_cost_probs, high_cost_probs, low_cost_support, high_cost_support
 
 
-def return_distribution(number_players, cost_probs, cost_support):
-    player_probabilities = [0] * number_players
-    for index, support in enumerate(cost_support):
-        player_probabilities[support] = cost_probs[support]
-    return player_probabilities
+# def return_distribution(number_players, cost_probs, cost_support):
+#     player_probabilities = [0] * number_players
+#     for index, support in enumerate(cost_support):
+#         player_probabilities[support] = cost_probs[support]
+#     return player_probabilities
 
 
 def create_directories():
