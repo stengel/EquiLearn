@@ -1,0 +1,40 @@
+Hi Carmine, nice idea, and I would like to give a talk as follows (all authors will attend):
+
+Multi-Agent Learning in a Pricing Game
+Galit Ashkenazi-Golan, Sahar Jahani, Katerina Papadaki, Edward Plumb, Bernhard von Stengel
+
+Abstract:
+This project proposes a framework, under development, of using machine learning to study larger and more realistic game-theoretic models. In a classic dynamic pricing game due to Selten, firms compete by repeatedly setting a price for a product, where higher prices lead to higher short-term but lower long-term profits. The classic subgame-perfect equilibrium is very competitive, whereas strategic experiments show a tendency of agents to collude. We want to employ machine learning of pricing strategies, with the learning environment given by a mixed equilibrium of existing strategies. The equilibrium is selected with the Harsanyi-Selten tracing procedure, which works fast. Successfully learned strategies are added to the pool and a new equilibrium is computed. This is akin to double-oracle learning in zero-sum games, except that the game is not zero-sum and the resulting equilibrium depends on the learning history. The approach is modular rather than a large simulation, which should allow a better study of the relevant features of the underlying game, its learning mechanisms, and the employed equilibrium concept.
+
+I look forward to seeing all in Sicily!
+Best regards,
+--Bernhard 
+
+* Carmine Ventre <carmine.ventre@kcl.ac.uk> [06-05-2023 09:42:37 +0000]:
+
+> Dear all,
+> 
+> We are putting together the scientific program for ALGA. We would like to organise a session on games and AI with the following roster:
+> 
+> Thu 8/6:
+> 
+> 14:00 -- 14:40 Farina
+> 14.40 -- 15:00 Espresso break
+> 15:00 -- 15:20 Von Stengel
+> 15:20 -- 15:40 Lavi
+> 15:40 -- 16:00 Gairing
+> 
+> We are imagining the longer talk to first frame (and potentially survey) the research area for those in the audience who are less familiar with it and then become more technical and discuss some of the speaker's recent work. We envision the three shorter talks to be somewhat similar to a typical conference talk.
+> 
+> Please let us know what you think and whether you are able to contribute to ALGA as from above. If so, it would great if you could also please let me know the title of your talk.
+> 
+> Looking forward to hearing from you and seeing you in Punta Sampieri.
+> 
+> Best,
+> Carmine
+
+-- 
+Prof Bernhard von Stengel         email: b.von-stengel@lse.ac.uk
+Department of Mathematics         http://www.maths.lse.ac.uk/Personal/stengel
+London School of Economics        Houghton St, Room COL 4.12
+London WC2A 2AE, United Kingdom

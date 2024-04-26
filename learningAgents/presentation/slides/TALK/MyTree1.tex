@@ -1,0 +1,17 @@
+\documentclass[12pt]{article}
+\usepackage{color}
+\usepackage{bimatrixgame}
+\renewcommand{\bimatrixrowcolor}{Red}
+\renewcommand{\bimatrixcolumncolor}{Blue}
+\begin{document}
+
+\bimatrixgame{1em}{2}{3}{1}{2}%
+{{$A$}{$B$}}%
+{{$a$}{$b$}{$c$}}
+{
+\payoffpairs{1}{{$155$}{\fbox{$142$}}{$124$}}{{\fbox{$80$}}{$79$}{$70$}}
+\payoffpairs{2}{{\fbox{$179$}}{$116$}{\fbox{$127$}}}{{$46$}{$53$}{\fbox{$56$}}}
+\put(2,2)
+}
+
+\end{document}
