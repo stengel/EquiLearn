@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import random
-import math 
 import fractions
 import matplotlib.pyplot as plt
 import sys
@@ -21,10 +20,7 @@ def randInSimplex(n, naive=False):
         i = n-1
         while i>0:
             b = random.uniform(0, 1)
-            if i==1 or b==1.0 :
-                f = 1-b
-            else:
-                f = math.exp(math.log(1-b)/i)
+            f = b**(1/i)
             x[i] = factor * (1-f)
             factor *= f
             i -= 1
@@ -85,7 +81,7 @@ if __name__ == "__main__":
             higherdim = a
     if len(arglist)>4:
         naiveplot = True
-    print (f"numpoints= {numpoints} accuracy= {accuracy} higherdim= {higherdim} naiveplot= {naiveplot}")
+    print (f"numpoints={numpoints} accuracy={accuracy} higherdim={higherdim} naiveplot={naiveplot}")
     if higherdim>3:
         segmentstart = (higherdim-2)//2
         print ("show positions", segmentstart,"..",
