@@ -31,7 +31,7 @@ gamefilename = "game"
 gz0 = False
 LHstring = "" # empty means LH not called
 seed = -1
-trace = -1 # negative: no tracing
+trace = 100 # negative: no tracing
 # accuracy = DEFAULT_accuracy = 1000
 accuracy = 1000
 
@@ -172,13 +172,15 @@ class payoffmatrix:
 
     # add full row, row must be of size n
     def addrow(self, row): 
-        self.matrix = np.vstack([self.matrix, row])
+        frow = [utils.tofraction(i) for i in row]
+        self.matrix = np.vstack([self.matrix, frow])
         self.numrows += 1
         self.updatemaxmin(self.numrows-1,0)
 
     # add full column, col must be of size m
     def addcolumn(self, col):
-        self.matrix = np.column_stack([self.matrix, col])
+        fcol = [utils.tofraction(i) for i in col]
+        self.matrix = np.column_stack([self.matrix, fcol])
         self.numcolumns += 1
         self.updatemaxmin(0,self.numcolumns-1)
 

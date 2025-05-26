@@ -62,6 +62,14 @@ def tofraction(s):
     # any other s than a float or string containing '.':
     return fractions.Fraction(s)
 
+def matrix_tofraction(A): # incoming A must be a numpy array
+    shape = A.shape
+    AA = np.zeros(shape)
+    for i in range(shape[0]):
+        for j in range(shape[1]):
+            AA[i][j] = tofraction(A[i][j])
+    return AA
+
 # create n-vector of fractions from words[start,start+n)
 def tovector(n, words, start):
     vector = np.zeros( (n), dtype=fractions.Fraction)
