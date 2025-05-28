@@ -86,3 +86,16 @@ def tomatrix(m, n, words, start):
             C[i][j] = tofraction(words[k])
             k+=1
     return C
+
+def fractions_np_to_int(tupl):
+    frac = []
+    for f in tupl:
+        n = f.numerator
+        d = f.denominator
+
+        if type(n) != int:
+            n = n.item()
+        if type(d) !=int:
+            d = d.item()
+        frac.append(fractions.Fraction(n,d))
+    return tuple(frac)

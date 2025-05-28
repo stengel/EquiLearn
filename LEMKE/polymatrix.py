@@ -1,15 +1,9 @@
-
-import sys
 import numpy as np
-import math
-import fractions
 import utils
-import columnprint
 import lemke
-import randomstart 
 import random # random.seed
-from bimatrix import payoffmatrix, getequil, str_eq, supports, rangesplit
-from randomstart import randInSimplex
+from bimatrix import payoffmatrix, uniform
+from randomstart import randInSimplex, roundArray
 
 # file format: 
 # m1 m2 m3 ..... m_n denoting n player i's number of possible actions
@@ -17,7 +11,9 @@ from randomstart import randInSimplex
 # m2*m1 entries of B, separated by blanks / newlines
 # .... and so on
 # blank lines or lines starting with "#" are ignored
-
+seed = -1
+trace = 100 # negative: no tracing
+accuracy = 1000
 
 class polymatrix():
     # create A given m vector
@@ -115,78 +111,104 @@ class polymatrix():
       
         return lcp
     
-    def runLH(self, droppedlabel):
+    def getpriors(self, accuracy):
+        priors = []
+        for i in range(self.players):
+
+            x = randInSimplex(self.actions[i])
+            prior = roundArray(x, accuracy)
+            priors.append(prior)
+        return priors
+
+    def runtrace(self, priors):
         lcp = self.createLCP()
-        lcp.d[droppedlabel-1] = 0  # subsidize this label
+        AX = []
+        for i in range(self.players):
+            aij_xj = [0] * self.actions[i]        # test for errors in dimensions
+            for j in range(self.players):
+                if i != j: # if not playing against myself
+                    aij_xj = [x+y for x,y in zip(aij_xj, self.A[i][j].negmatrix @ priors[j])]
+               
+            AX.append(aij_xj)
+        AX.append([1]*self.players)
+        lcp.d = np.hstack(AX)
         tabl = lemke.tableau(lcp)
-        # tabl.runlemke(verbose=True, lexstats=True, z0=gz0)
-        tabl.runlemke(silent=False)
-        return tuple(getequil(tabl))
+        tabl.runlemke(silent=True)
+        return tuple(self.getequil(tabl))
     
-    def LH(self, LHstring):
-        if LHstring == "":
+
+    def tracing(self, trace):
+        deq = {}
+        if trace < 0:
             return
-        m = sum(self.actions)
-        n = self.players
-        lhset = {} # dict of equilibria and list by which label found
-        labels = rangesplit(LHstring, m+n)
-        # how many labels? what to assign to LHstring?
+        elif trace == 0:
+            priors = []
+            for p in range(self.players):
+                priors.append(uniform(self.actions[p]))
+                eq = self.runtrace(priors)
+                deq[eq]=1
+                trace = 1 
+        else:
+            for k in range(trace):
+                if seed >=0:
+                    random.seed(10*trace*seed+k)
+                priors = self.getpriors(accuracy)
+                result = self.runtrace(priors)
+                eq = utils.fractions_np_to_int(result)
+                if eq in deq:
+                    deq[eq] += 1
+                else:
+                    deq[eq] = 1
+        self.print_statistics(deq)
+        
     
-
-
-
-M = [[[1,0],[0,1]], [[1,0],[0,1]], [[1,0],[0,1]], [[1,0],[0,1]], [[1,0],[0,1]], [[1,0],[0,1]]]
-
-x = polymatrix("polygame1.txt")
-print(x)
-y = x.createLCP()
-print(y)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Archives - code written for testing, not used at the moment.
-class sampleMatrix():
-    def __init__(self, m): #m = [m1, m2, m3, ....., m_n]
-        self.m = m
-        self.n = len(m)
-        self.A = self.getRandomPayoffs(m)
-
-    def getRandomPayoffs(m):
-        numplayers = len(m)
-        A = np.zeros( (numplayers, numplayers), dtype=object) 
-        for i in range(numplayers):
-            for j in range(numplayers):
-                if i != j:
-                    matrix = np.random.rand(m[i], m[j])
-                    matrix = utils.matrix_tofraction(matrix)
-                    A[i][j] = matrix
-        return A
+    def getequil(self,tabl):
+        tabl.createsol()
+        return tabl.solution[1:tabl.n-(self.players-1)]
     
-    def __init__(self, m, Matrices): #Matrices = list of matrices sorted by the indices of row player asc
-        self.m = m
-        self.n = len(m)
-        mainmatrix = np.zeros( (self.n, self.n), dtype=object) 
-        k=0
-        for i in range(self.n):
-            for j in range(self.n):
-                if i != j:
-                    mainmatrix[i][j] = utils.matrix_tofraction(Matrices[k])
-                    k+=1
-        self.A = mainmatrix
+    def print_statistics(self, deq):
+        for k in deq:
+            st = ""
+            start = 0
+            for idx in self.actions:
+                st += " ("
+                for j in range(start, start+idx):
+                    st += " "+ str(k[j])+" "
+                st += ") "
+                start += idx
+            print("--------")
+            print(st)
+            print("found ", deq[k], " times")
+            
+            
+
+
+    def find_supports(self, eq):
+        supports = []
+        idx = 0
+        for i in range(self.players):
+                supp = [j for j in range(self.actions[i]) if eq[idx+j]!= 0]
+                supports.append(supp)
+                idx += self.actions[i]
+        return supports
+
+
+        
+#M = [[[1,0],[0,1]], [[1,0],[0,1]], [[1,0],[0,1]], [[1,0],[0,1]], [[1,0],[0,1]], [[1,0],[0,1]]]
+
+x = polymatrix("poly4.txt")
+x.tracing(trace)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
