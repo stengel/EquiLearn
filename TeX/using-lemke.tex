@@ -1,9 +1,10 @@
 % using Lemke
 \documentclass[a4paper,12pt]{article}  %% important: a4paper first
 %
-% \usepackage[notcite,notref]{showkeys}
+\usepackage[notcite,notref]{showkeys}
 \pdfoutput=1
 \usepackage{natbib} 
+\usepackage{amssymb}
 \usepackage{amsthm}
 \usepackage{newpxtext,newpxmath} 
 \usepackage{microtype}
@@ -14,7 +15,6 @@
 \usepackage{tikz} 
 \usetikzlibrary{shapes}
 \usetikzlibrary{arrows.meta}
-\usepackage{amssymb}
 %\usepackage{smallsec}
 \usepackage{graphicx}
 %\usepackage[pdflatex]{hyperref}
@@ -80,8 +80,8 @@
 Path-Following for Bimatrix Games Using Lemke's Algorithm
 }
 \author{Bernhard von Stengel}
-%\date{January 3, 2013
-\date{\today
+\date{May 1, 2023
+%\date{\today
 \\[1ex]
 }
 
@@ -473,7 +473,7 @@ z=\left[\begin{matrix}x\\y\\ u^-\\v^-
 q=\left[\begin{matrix}\0\\ \0\\  -1\\-1
 \end{matrix}\right],\qquad 
 M=\left[\begin{matrix}
-&-A&\1\\
+&-A&-\1\\
 -B\T&&&-\1\\
 \1\T &\\
 &\1\T\\
