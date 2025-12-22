@@ -196,7 +196,7 @@ class polymatrix():
         
 #M = [[[1,0],[0,1]], [[1,0],[0,1]], [[1,0],[0,1]], [[1,0],[0,1]], [[1,0],[0,1]], [[1,0],[0,1]]]
 
-x = polymatrix("poly4.txt")
+x=polymatrix("polygame.txt")
 x.tracing(trace)
 
 
