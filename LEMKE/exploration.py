@@ -278,7 +278,6 @@ def explore_all(gamefile, trace = 100):
     print_strategy_list(game, all_discovered)
     print_relationship_table(relationship_log)
     test_return_to_Stage1(game, all_discovered)
-    #visualize_equilibrium_map(all_discovered, relationship_log, "game_discovery_map.png")
     visualize_stage_flow_with_attraction(all_discovered, relationship_log)
 
 
