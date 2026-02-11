@@ -4,6 +4,7 @@
 
 import fractions
 import numpy as np
+import math
 
 # global constants, mutable
 # https://stackoverflow.com/questions/1977362/how-to-create-module-wide-variables-in-python
@@ -62,9 +63,11 @@ def tofraction(s):
     # any other s than a float or string containing '.':
     return fractions.Fraction(s)
 
-def matrix_tofraction(A): # incoming A must be a numpy array
+def matrix_tofraction(A): 
+    # incoming A must be a numpy array
     shape = A.shape
-    AA = np.zeros(shape)
+    AA = np.zeros(shape, dtype=object) 
+    
     for i in range(shape[0]):
         for j in range(shape[1]):
             AA[i][j] = tofraction(A[i][j])
@@ -99,3 +102,8 @@ def fractions_np_to_int(tupl):
             d = d.item()
         frac.append(fractions.Fraction(n,d))
     return tuple(frac)
+
+def get_lcm(a, b):
+    """Compute Least Common Multiple."""
+    if a == 0 or b == 0: return 0
+    return abs(a * b) // math.gcd(a, b)

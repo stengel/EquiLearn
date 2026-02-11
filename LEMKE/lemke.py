@@ -16,6 +16,11 @@ verbose=False
 silent=False
 z0=False
 
+class RayTerminationError(Exception):
+    """Exception raised when Lemke's algorithm hits an unbounded ray."""
+    pass
+
+
 # process command-line arguments
 def processArguments():
     global lcpfilename,outfile,filehandle,verbose,silent,z0
@@ -282,7 +287,7 @@ class tableau:
         s = "leaving: " + self.vartoa(leave).ljust(5)
         s += "entering: " + self.vartoa(enter)
         printout (s)
-        return 
+        return s
 
     def raytermination(self, enter):
         printout("Ray termination when trying to enter",self.vartoa(enter))
@@ -290,7 +295,7 @@ class tableau:
         printout("Current basis not an LCP solution:")
         self.createsol()
         printout(self.outsol())
-        exit(1)
+        raise RayTerminationError("Hit a Ray")
 
     def testtablvars(self): # msg only if error, continue
         n = self.n
@@ -357,6 +362,7 @@ class tableau:
             if A[i][col] > 0:
                 leavecand.append(i)
         if leavecand == []:
+            print("OMG Ray termination!!!!!")
             self.raytermination(enter)
         if len(leavecand)==1: # single positive entering value
              z0leave = self.bascobas[0] == leavecand[0]
@@ -442,9 +448,9 @@ class tableau:
                 nonzero = A[i][col] != 0
                 for j in range(n+2):
                     if j != col:
-                        tmp1 = A[i][j] * pivelt
+                        tmp1 = int(A[i][j]) * int(pivelt)
                         if nonzero:
-                            tmp2 = A[i][col] * A[row][j]
+                            tmp2 = int(A[i][col]) * int(A[row][j])
                             if negpiv:
                                 tmp1 += tmp2
                             else:
@@ -456,7 +462,7 @@ class tableau:
         # end of  for i
         A[row][col] = self.determinant
         if negpiv:
-            negrow(row)
+            self.negrow(row)
         self.determinant = pivelt # by construction always positive
         # update tableau variables
         self.bascobas[leave] = col+n
@@ -524,7 +530,7 @@ class tableau:
         if (lexstats):
             self.outstatistics()
     #######  end of class tableau
-
+
 if __name__ == "__main__":
     # m = lcp(3)
     # m.M[0][1] = fractions.Fraction(2,3)
