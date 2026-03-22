@@ -1,0 +1,2 @@
+pandoc -s i.md -o i.html
+pandoc i.md -o i.tex ; pdflatex implement-lemke; evince implement-lemke.pdf
