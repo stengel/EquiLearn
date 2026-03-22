@@ -1,0 +1,107 @@
+% using Lemke
+\documentclass[a4paper,12pt]{article}  %% important: a4paper first
+%
+%\usepackage[notcite,notref]{showkeys}
+  %\renewcommand*\showkeyslabelformat[1]{{\textcolor{blue!80!black} {\tiny\ttfamily\strut #1}}} 
+\pdfoutput=1
+\usepackage{natbib} 
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{newpxtext,newpxmath} 
+\usepackage{inconsolata}
+\usepackage{etoolbox}
+\AtBeginEnvironment{verbatim}{\small}
+% \AtBeginEnvironment{Shaded}{\small}
+\usepackage{microtype}
+\linespread{1.10}        % Palatino needs more leading (space between lines)
+\usepackage{xcolor}
+\usepackage{pict2e} 
+% \usepackage{bimatrixgame}
+\usepackage{tikz} 
+\usetikzlibrary{shapes}
+\usetikzlibrary{arrows.meta}
+%\usepackage{smallsec}
+\usepackage{graphicx}
+%\usepackage[pdflatex]{hyperref}
+\usepackage[hyphens]{url} 
+\usepackage[colorlinks,linkcolor=blue,citecolor=blue]{hyperref}
+%\usepackage{hyperref}
+\urlstyle{sf}
+\usepackage[format=hang,justification=justified,labelfont=bf,labelsep=quad]{caption} 
+% \input macros-drawtree
+\oddsidemargin=.46cm    % A4
+\textwidth=15cm
+\textheight=23.3cm
+\topmargin=-1.3cm
+\clubpenalty=10000
+\widowpenalty=10000
+\predisplaypenalty=1350
+\sfcode`E=1000  % normal spacing if E followed by period, as in "EFCE."
+\sfcode`P=1000  % normal spacing if P followed by period, as in "NP." 
+\newdimen\einr
+\einr1.7em
+\newdimen\eeinr 
+\eeinr 1.7\einr
+\def\aabs#1{\par\hangafter=1\hangindent=\eeinr
+    \noindent\hbox to\eeinr{\strut\hskip\einr#1\hfill}\ignorespaces}
+\def\rmitem#1{\par\hangafter=1\hangindent=\einr
+  \noindent\hbox to\einr{\ignorespaces#1\hfill}\ignorespaces} 
+\newcommand\bullitem{\rmitem{\raise.17ex\hbox{\kern7pt\scriptsize$\bullet$}}} 
+\def\subbull{\vskip-.8\parskip\aabs{\raise.2ex\hbox{\footnotesize$\circ$}}}
+\let\sfield\mathcal
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+\def\reals{{\mathbb R}} 
+\def\eps{\varepsilon}
+\def\prob{\hbox{prob}}
+\def\sign{\hbox{sign}}
+\def\proof{\noindent{\em Proof.\enspace}}
+\def\proofof#1{\noindent{\em Proof of #1.\enspace}}
+\def\endproof{\hfill\strut\nobreak\hfill\tombstone\par\medbreak}
+\def\tombstone{\hbox{\lower.4pt\vbox{\hrule\hbox{\vrule
+  \kern7.6pt\vrule height7.6pt}\hrule}\kern.5pt}}
+\def\eqalign#1{\,\vcenter{\openup.7ex\mathsurround=0pt
+ \ialign{\strut\hfil$\displaystyle{##}$&$\displaystyle{{}##}$\hfil
+ \crcr#1\crcr}}\,}
+\def\zw#1\par{\vskip2ex{\textbf{#1}}\par\nobreak} 
+\newdimen\pix  % bounding box height for eps files
+\pix0.08ex
+\newsavebox{\figA} 
+\parindent0pt
+\parskip0.6ex
+\itemsep0pt
+
+\newcommand{\T}{^{\top}}
+\newcommand{\0}{{\mathbf0}}
+\newcommand{\1}{{\mathbf1}}
+
+\newcommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+\title{%
+Exact-Arithmetic Implementation of Lemke's Algorithm 
+}
+\author{Bernhard von Stengel}
+% \date{May 1, 2023
+\date{\today
+\\[1ex]
+}
+
+\begin{document}
+\maketitle
+
+% \begin{abstract}
+
+\input i
+
+\small
+\bibliographystyle{book}
+\bibliography{bib-evol} 
+
+\end{document}
+
