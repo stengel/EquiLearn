@@ -2,6 +2,7 @@
 \documentclass[a4paper,12pt]{article}  %% important: a4paper first
 %
 \usepackage[notcite,notref]{showkeys}
+  \renewcommand*\showkeyslabelformat[1]{{\textcolor{blue!80!black} {\tiny\ttfamily\strut #1}}}
 \pdfoutput=1
 \usepackage{natbib} 
 \usepackage{amssymb}
@@ -11,7 +12,7 @@
 \linespread{1.10}        % Palatino needs more leading (space between lines)
 \usepackage{xcolor}
 \usepackage{pict2e} 
-\usepackage{bimatrixgame}
+% \usepackage{bimatrixgame}
 \usepackage{tikz} 
 \usetikzlibrary{shapes}
 \usetikzlibrary{arrows.meta}
