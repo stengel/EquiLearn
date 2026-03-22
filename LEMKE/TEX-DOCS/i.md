@@ -8,9 +8,9 @@ We document the exact-arithmetic implementation of
 Lemke's algorithm as in
 <https://github.com/stengel/EquiLearn/tree/main/LEMKE/>
 
-It has been moved to GAMBIT with cery minor modifications
+It has been moved to GAMBIT with very minor modifications
 (such as removed first lines `#!/usr/bin/python`) at
-<https://github.com/gambitproject/lemke/tree/main/src>
+<https://github.com/gambitproject/lemke/tree/main/src>.
 
 The mathematical background is described in
 <https://github.com/stengel/EquiLearn/tree/main/LEMKE/TEX-DOCS>
